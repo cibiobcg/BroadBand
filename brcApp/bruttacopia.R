@@ -53,7 +53,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                   fluidRow(
                     column(3,  tableOutput(outputId = 'classtable'))
                    )),
-                tabPanel('sec',
+                tabPanel('sec'
                            # downloadButton(
                             #  outputId = 'downloadPlot',
                              # label = 'Download Plot'),
@@ -66,7 +66,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  #data manilupation
+  #data manilupation primo apposto 
   
   rawdata <- file %>% # questo e' il file riadattato per il primo grafico iterattivo dove posso variare tutte le variabili
     group_by(data,class,type) %>%
@@ -78,31 +78,40 @@ server <- function(input, output) {
     data1 <- subset(data1, data %in% input$Resources)
     data1 <- subset(data1, type %in% input$Types)
     data1 <- subset(data1, class %in% input$Class)})
+
   
-  rawdata2 <- file %>% # file per grafico e tabella tra metastatici e primari 
-    group_by(class,type) %>%
-    summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
-  
-  # rendo iterattivo solo per le resources e i types, le classi dovrebbero rimanere costanti 
+  # rendo iterattivo solo per tutti e tre i gli input ed è resa interattiva!!
   newData2 <- reactive({
-    data2 <- rawdata2
+    data2 <- file
     data2 <- subset(data2, type %in% input$Types)
-    data2 <- subset(data2, class %in% input$Class)})
+    data2 <- subset(data2, data %in% input$Resources)
+    data2 <- subset(data2, class %in% input$Class)
+    data2 <- data2 %>%
+        group_by(class,type) %>%
+        summarise(n.samples= n_distinct(sample.id),n.patients=n_distinct(patient.id)) 
+    })
   
+ 
+  #rawdata_table <- rawdata %>%
+   #                rbind(all)
+  
+  
+  # devo rendere reattivo all in modo che anche quest cambi con il cambiare della soruces, quindi cambino i valori man mano
   all <- file %>% # in questo caso %>% indica al file sif di applicare l aseguente funzione che segue la 'pipe'
-    group_by(class,type) %>% # in questo caso il comando group_by singifica che il file vien raggruppato per classe e tipo, poi una volta applicato usa la seconda funzione che segue 
-    summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
-    add_column(data='all',.before = 'class') # aggiunto colonna all prima di classe nella data frame
-  
-  rawdata_table <- rawdata %>%
-                   rbind(all)
+   group_by(class,type) %>% # in questo caso il comando group_by singifica che il file vien raggruppato per classe e tipo, poi una volta applicato usa la seconda funzione che segue 
+   summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
+   add_column(data='all',.before = 'class')
   
   #unicamente per la dataTable
   newData_table <- reactive({
-  data3 <- rawdata_table
-  # data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
+  data3 <- rawdata #file
+  data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
   data3 <- subset(data3, type %in% input$Types)
   data3 <- subset(data3, class %in% input$Class)
+  
+  # aggiunto colonna all prima di classe nella data frame
+  #data3 <- data3 %>%
+   #         rbind(all)
   })
   
 # non lo lascia fare, devo vedere come unire due reactive object o seno pensare altra soluzione 
@@ -132,7 +141,7 @@ server <- function(input, output) {
         ggplot(newData2(), aes(x=type,y=n.samples,fill=class)) +
            geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
            scale_fill_manual(values=c('#999999','#E69F00')) +
-           geom_text(aes(label=n.samples)) + # questo comando serve per aggiungere la numerazione delle quantita', in qunato non si riesce a capire bene il nuemro reale senza indicazione
+           geom_text(aes(label=n.samples)) + # questo comando serve per aggiungere la numerazione delle quantita', in qunato non si riesce a capire bene il numero reale senza indicazione
            facet_wrap(~class)})# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
     
     #DataTable
@@ -142,3 +151,4 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
