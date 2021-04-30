@@ -14,6 +14,7 @@ library(tidyverse)
 file <- read.table('sif_cbioportal_brca.tsv', header = TRUE)
 
 # Define UI for application that draws a histogram
+
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 theme = shinytheme('superhero'),
 
@@ -80,7 +81,8 @@ server <- function(input, output) {
     data1 <- subset(data1, class %in% input$Class)})
 
   
-  # rendo iterattivo solo per tutti e tre i gli input ed è resa interattiva!!
+  #rendo iterattivo solo per tutti e tre i gli input ed è resa interattiva!!
+  
   newData2 <- reactive({
     data2 <- file
     data2 <- subset(data2, type %in% input$Types)
@@ -108,6 +110,15 @@ server <- function(input, output) {
   data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
   data3 <- subset(data3, type %in% input$Types)
   data3 <- subset(data3, class %in% input$Class)
+  all2 <- data3 %>%
+          group_by(class,type) %>%
+          summarise(n.samples_sum=sum(n.samples),n.patients_sum=sum(n.patients))%>% # sum somma, che e' diverso da n_dsitincr il quale e' un equivalnte della funzionelenght
+          add_column(data='all',.before = 'class')
+  all2 <- all2 %>%
+          rename(n.samples =n.samples_sum, n.patients = n.patients_sum)
+  data3 <- data3 %>%
+           rbind(all2)
+
   
   # aggiunto colonna all prima di classe nella data frame
   #data3 <- data3 %>%
