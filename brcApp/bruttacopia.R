@@ -81,7 +81,7 @@ server <- function(input, output) {
     data1 <- subset(data1, class %in% input$Class)})
 
   
-  #rendo iterattivo solo per tutti e tre i gli input ed è resa interattiva!!
+  #rendo iterattivo solo per tutti e tre i gli input ed ? resa interattiva!!
   
   newData2 <- reactive({
     data2 <- file
@@ -93,17 +93,13 @@ server <- function(input, output) {
         summarise(n.samples= n_distinct(sample.id),n.patients=n_distinct(patient.id)) 
     })
   
- 
-  #rawdata_table <- rawdata %>%
-   #                rbind(all)
-  
   
   # devo rendere reattivo all in modo che anche quest cambi con il cambiare della soruces, quindi cambino i valori man mano
-  all <- file %>% # in questo caso %>% indica al file sif di applicare l aseguente funzione che segue la 'pipe'
-   group_by(class,type) %>% # in questo caso il comando group_by singifica che il file vien raggruppato per classe e tipo, poi una volta applicato usa la seconda funzione che segue 
-   summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
-   add_column(data='all',.before = 'class')
-  
+  # all <- file %>% # in questo caso %>% indica al file sif di applicare l aseguente funzione che segue la 'pipe'
+  #  group_by(class,type) %>% # in questo caso il comando group_by singifica che il file vien raggruppato per classe e tipo, poi una volta applicato usa la seconda funzione che segue 
+  #  summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
+  #  add_column(data='all',.before = 'class')
+   
   #unicamente per la dataTable
   newData_table <- reactive({
   data3 <- rawdata #file
@@ -118,30 +114,7 @@ server <- function(input, output) {
           rename(n.samples =n.samples_sum, n.patients = n.patients_sum)
   data3 <- data3 %>%
            rbind(all2)
-
-  
-  # aggiunto colonna all prima di classe nella data frame
-  #data3 <- data3 %>%
-   #         rbind(all)
   })
-  
-# non lo lascia fare, devo vedere come unire due reactive object o seno pensare altra soluzione 
-  # rawdata_table <- reactive({
-  #   data3 <- rawdata
-  #   data3 <- subset(data3, data %in% input$Resources)
-  #   data3 <- subset(data3, type %in% input$Types)
-  #   data3 <- subset(data3, class %in% input$Class)})
-  # 
-  # all2 <- reactive({
-  #   data4<- all
-  #   data4<- subset(data4, type %in% input$Types)
-  #   data4<- subset(data4, class %in% input$Class)
-  # })
-  
-  #non se po fa 
-  #Data_talbe <- rawdata_table %>%
-   #             rbind(all2)
-
        #plotting
     output$myplot <- renderPlot({
         # generate bins based on input$bins from ui.R
