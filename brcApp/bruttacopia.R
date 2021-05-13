@@ -130,8 +130,8 @@ server <- function(input, output) {
     data1 <- subset(data1, data %in% input$Resources)
     data1 <- subset(data1, type %in% input$Types)
     data1 <- subset(data1, class %in% input$Class)
-    data1 <- subset(data1, cna.data %in% input$CNA)
-    data1 <- subset(data1, snv.data %in% input$SNV)
+    # data1 <- subset(data1, cna.data %in% input$CNA)
+    # data1 <- subset(data1, snv.data %in% input$SNV)
     })
   #rendo interattivo solo per tutti e tre i gli input ed ? resa interattiva!!
   
@@ -140,8 +140,8 @@ server <- function(input, output) {
     data2 <- subset(data2, type %in% input$Types)
     data2 <- subset(data2, data %in% input$Resources)
     data2 <- subset(data2, class %in% input$Class)
-    data2 <- subset(data2, cna.data %in% input$CNA)
-    data2 <- subset(data2, snv.data %in% input$SNV)
+    # data2 <- subset(data2, cna.data %in% input$CNA)
+    # data2 <- subset(data2, snv.data %in% input$SNV)
     data2 <- data2 %>%
         group_by(class,type) %>%
         summarise(n.samples= n_distinct(sample.id),n.patients=n_distinct(patient.id)) 
@@ -164,8 +164,8 @@ server <- function(input, output) {
     data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
     data3 <- subset(data3, type %in% input$Types)
     data3 <- subset(data3, class %in% input$Class)
-    data3 <- subset(data3, cna.data %in% input$CNA)
-    data3 <- subset(data3, snv.data %in% input$SNV)
+    # data3 <- subset(data3, cna.data %in% input$CNA)
+    # data3 <- subset(data3, snv.data %in% input$SNV)
     all2 <- data3 %>%
           group_by(class,type) %>%
           summarise(n.samples_sum=sum(n.samples),n.patients_sum=sum(n.patients))%>% # sum somma, che e' diverso da n_dsitincr il quale e' un equivalnte della funzionelenght
