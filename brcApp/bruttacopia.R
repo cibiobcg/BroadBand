@@ -11,10 +11,12 @@ library(shiny)
 library(shinythemes)
 library(tidyverse)
 library(shinyjs) 
+library(gridExtra)
 
 # cercare modo per quelle cazzo di booleane
 
 file <- read.table('sif_cbioportal_brca.tsv', header = TRUE)
+file2<- read.delim('snv_freq_brca.tsv', header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type) 
 
 # cna_false <- file %>%
 #             filter(snv.data == FALSE)
@@ -67,9 +69,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 selected = c('Primary','Metastasis')),
     conditionalPanel( # questo per creare un checbox aggiuntivo quando si passa alla secondo pannello 
               condition = 'input.tabs== 2',
-                checkboxGroupInput(inputId = 'mama',label = 'mama',
-                  choices = c('mama','papa','fiol','fioi'))
-        )),
+                sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25),
+                 )
+        ),
         # Show a plot of the generated distribution
         mainPanel(
               tabsetPanel(type= 'tabs', id = 'tabs',
@@ -79,23 +81,26 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                     column(6,plotOutput(outputId = 'classplot' ))
                     ),
                   fluidRow(
-                    column(3,  tableOutput(outputId = 'classtable'))
+                    column(3,dataTableOutput(outputId = 'classtable'))
                    )),
                 tabPanel(id ='sec', value = 2,
                          'Second screen',
-                         
-                  # fluidRow(
-                    
-                  # )
-                  )
+                   fluidRow(
+                     column(6,plotOutput(outputId = 'barplot')),
+                     column(6,plotOutput(outputId = 'heatmap'))
+                   ),
+                   fluidRow(
+                     column(3,dataTableOutput(outputId = 'table2'))
+                   )
+                  ))
                            # downloadButton(
                             #  outputId = 'downloadPlot',
                              # label = 'Download Plot'),
-                           )
+                           
                          )
                       )
-                    )
-                 )
+                    ))
+                 
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -117,6 +122,13 @@ server <- function(input, output) {
   #       filter(snv.data == TRUE)
   #     }else{NULL}
   # })
+  
+#############################################################################################################
+#####################################à Per primo pannello ###################################################
+  
+  mw <- file2 %>%
+    arrange(desc(w.mean))
+  
   #in questo modo sono risucito a rendere reattivo il file rawdata per tutte e tre i chechboxinput, in questo modo posson modificare i plot in base agli input dei checkbox della ui
   newData <- reactive({
     rawdata <- file %>%       
@@ -177,7 +189,43 @@ server <- function(input, output) {
   #data3 <- data3$cna.data == NULL
     })
   
-# gestione combinazione tasti
+# quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
+  
+  #data per barplot
+  data_second_pannel <- reactive({
+    data_pan_1 <- mw %>%
+                  slice_head(n = input$Gene_filter) %>%
+                  group_split()
+    plist <- list()
+    for(i in 1:length(mw)){
+      dn <- mw[[i]]
+      dn <- subset(dn, types %in% input$Types)  #only 'grobs' allowed in "gList"
+      dn <- subset(dn, class %in% input$Class)
+      dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
+      ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
+        geom_bar(stat="identity") + coord_flip() +
+        facet_wrap(type~class,scales = 'free')
+      plist[[i]] <- ggplotGrob(p)
+    }
+    # tagliamo  le prime 25 righe del tasate con slice_head(n=25), in questo caso in base a silde bar
+    # data_pan_1 <- subset(data_pan_1, type %in% input$Types)
+    # data_pan_1 <- subset(data_pan_1, class %in% input$Class)
+    # data_pan_1 <- data_pan_1 %>%
+    #               group_split() # risolvere perchè group split non permette di lavorare 
+  })
+  
+  data_second_pannel_heatmap <- reactive({
+    mw2 <- mw %>%
+          slice_head(n = input$Gene_filter) %>%
+          group_split()
+    mat <- do.call(rbind,mw2)
+    mat <- subset(mat, type %in% input$Types)
+    mat <- subset(mat, class %in% input$Class)
+    mat <- mat %>%
+      filter(type != 'all')
+  })
+  
+############### gestione combinazione tasti ALL - SNV - CNA #####################
   observeEvent(input$ALL,{
     if(input$ALL == TRUE){
                shinyjs::disable('CNA')
@@ -199,7 +247,6 @@ server <- function(input, output) {
               shinyjs::enable('ALL')
     }})
   
-  
        #plotting
     output$myplot <- renderPlot({
         # generate bins based on input$bins from ui.R
@@ -214,8 +261,23 @@ server <- function(input, output) {
            facet_wrap(~class)})# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
     
     #DataTable
-    output$classtable <- renderTable(newData_table()) # non posso mettere due oggetti di fila?
+    output$classtable <- renderDataTable(newData_table()) # non posso mettere due oggetti di fila?
     
+#############################################################################################################
+##################################### Per secondo pannello ###################################################
+  
+       output$barplot <- renderPlot({
+      grid.arrange(grobs=plist,ncol=4) 
+    })
+    
+    output$heatmap <- renderPlot({ 
+      ggplot(data_second_pannel_heatmap(), aes(type, Hugo_Symbol)) +  
+        geom_tile(aes(fill = w.mean)) + 
+        geom_text(aes(label = round(w.mean, 3)),size=2) +
+        scale_fill_gradient(low = "white", high = "red") +
+        facet_wrap(~class)
+    })
+    output$table2 <- renderDataTable(data_second_pannel_heatmap())
 }
 
 # Run the application 
