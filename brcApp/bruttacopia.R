@@ -18,9 +18,6 @@ library(gridExtra)
 file <- read.table('sif_cbioportal_brca.tsv', header = TRUE)
 file2<- read.delim('snv_freq_brca.tsv', header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type) 
 
-# cna_false <- file %>%
-#             filter(snv.data == FALSE)
-  
 # Define UI for application that draws a histogram
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
@@ -51,12 +48,6 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 label = 'Data resources',
                 choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
                 selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
-            # selectInput(
-            #   inputId = 'Data',
-            #   label = 'Data',
-            #   choices = list('All'= 1, 'Somatic copy number alterations' = 2, 'Somatic single nucleotides variants'= 3),
-            #   selected = 1
-            # ),
             checkboxGroupInput(
                 inputId = 'Types',
                 label = 'Breast cancer subtypes',
@@ -67,10 +58,10 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 label = 'Tumor classification',
                 choices = c('Primary','Metastasis'),
                 selected = c('Primary','Metastasis')),
-    conditionalPanel( # questo per creare un checbox aggiuntivo quando si passa alla secondo pannello 
+    conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
               condition = 'input.tabs== 2',
-                sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25),
-                 )
+                sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25)
+              )
         ),
         # Show a plot of the generated distribution
         mainPanel(
@@ -101,28 +92,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                       )
                     ))
                  
-
-# Define server logic required to draw a histogram
 server <- function(input, output) {
-  
-  # primo filtro su snv e cna
-  
-  # observeEvent(input$ALL,{
-  #   if(input$ALL == TRUE){file %>%
-  #       filter(cna.data == TRUE | snv.data == TRUE)
-  #   } else {NULL}
-  # })
-  # observeEvent(input$CNA, {
-  #   if(input$CNA == TRUE){file %>%
-  #       filter(cna.data == TRUE)
-  #   } else {NULL}
-  # })
-  # observeEvent(input$SNV,{
-  #   if(input$SNV == TRUE){file %>%
-  #       filter(snv.data == TRUE)
-  #     }else{NULL}
-  # })
-  
+
 #############################################################################################################
 #####################################à Per primo pannello ###################################################
   
@@ -135,10 +106,6 @@ server <- function(input, output) {
       group_by(data,class,type,cna.data,snv.data) %>%
       summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
     data1 <- rawdata
-    # if (input$ALL == TRUE){
-    #   data1 <- data1 %>%
-    #     filter(cna.data == TRUE | snv.data == TRUE)
-    # } else { data1 <- data1}
     data1 <- subset(data1, data %in% input$Resources)
     data1 <- subset(data1, type %in% input$Types)
     data1 <- subset(data1, class %in% input$Class)
@@ -167,7 +134,7 @@ server <- function(input, output) {
   
   #unicamente per la dataTable
   
-  # !!! eliminare le due colonne di cnv e snv come output?
+  # !!! eliminare le due colonne di cnv e snv come output? nope
   newData_table <- reactive({
     rawdata <- file %>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -186,27 +153,29 @@ server <- function(input, output) {
           rename(n.samples =n.samples_sum, n.patients = n.patients_sum)
     data3 <- data3 %>%
            rbind(all2)
-  #data3 <- data3$cna.data == NULL
     })
   
 # quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
+  
+  plist <- list()
   
   #data per barplot
   data_second_pannel <- reactive({
     data_pan_1 <- mw %>%
                   slice_head(n = input$Gene_filter) %>%
-                  group_split()
-    plist <- list()
-    for(i in 1:length(mw)){
-      dn <- mw[[i]]
-      dn <- subset(dn, types %in% input$Types)  #only 'grobs' allowed in "gList"
-      dn <- subset(dn, class %in% input$Class)
+                  group_split()                                                 #object of type 'closure' is not subsettable
+    for(i in 1:length(data_pan_1)){
+      dn <- data_pan_1[[i]]
       dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
-      ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
+      dn <- subset(dn, type %in% input$Types)
+      dn <- subset(dn, class %in% input$Class)
+      p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
         geom_bar(stat="identity") + coord_flip() +
         facet_wrap(type~class,scales = 'free')
       plist[[i]] <- ggplotGrob(p)
     }
+    # dn <- subset(dn, types %in% input$Types)  #only 'grobs' allowed in "gList"
+    # dn <- subset(dn, class %in% input$Class)
     # tagliamo  le prime 25 righe del tasate con slice_head(n=25), in questo caso in base a silde bar
     # data_pan_1 <- subset(data_pan_1, type %in% input$Types)
     # data_pan_1 <- subset(data_pan_1, class %in% input$Class)
@@ -261,13 +230,12 @@ server <- function(input, output) {
            facet_wrap(~class)})# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
     
     #DataTable
-    output$classtable <- renderDataTable(newData_table()) # non posso mettere due oggetti di fila?
+    output$classtable <- renderDataTable(newData_table()) 
     
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################
   
-       output$barplot <- renderPlot({
-      grid.arrange(grobs=plist,ncol=4) 
+       output$barplot <- renderPlot({ grid.arrange(grobs=plist,ncol=4) 
     })
     
     output$heatmap <- renderPlot({ 
