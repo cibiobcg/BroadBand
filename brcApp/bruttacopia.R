@@ -95,12 +95,13 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
 server <- function(input, output) {
 
 #############################################################################################################
-#####################################à Per primo pannello ###################################################
+##################################### Per primo pannello ###################################################
   
   mw <- file2 %>%
     arrange(desc(w.mean))
   
   #in questo modo sono risucito a rendere reattivo il file rawdata per tutte e tre i chechboxinput, in questo modo posson modificare i plot in base agli input dei checkbox della ui
+  
   newData <- reactive({
     rawdata <- file %>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -109,6 +110,19 @@ server <- function(input, output) {
     data1 <- subset(data1, data %in% input$Resources)
     data1 <- subset(data1, type %in% input$Types)
     data1 <- subset(data1, class %in% input$Class)
+    if(input$ALL == TRUE){
+      data1 <- data1 %>%
+              filter(snv.data == TRUE | cna.data == TRUE)
+    }else if (input$SNV == TRUE & input$CNA == FALSE){
+      data1 <- data1 %>% 
+              filter(snv.data == TRUE)
+    }else if (input$CNA == TRUE & input$SNV == FALSE) {
+      data1 <- data1 %>% 
+              filter(cna.data == TRUE)
+    }else if (input$SNV & input$CNA){
+      data1 <- data1 %>% 
+                filter(cna.data == TRUE & snv.data ==TRUE)
+    }
     # data1 <- subset(data1, cna.data %in% input$CNA)
     # data1 <- subset(data1, snv.data %in% input$SNV)
     })
@@ -119,6 +133,19 @@ server <- function(input, output) {
     data2 <- subset(data2, type %in% input$Types)
     data2 <- subset(data2, data %in% input$Resources)
     data2 <- subset(data2, class %in% input$Class)
+    if(input$ALL == TRUE){
+      data2 <- data2 %>%
+        filter(snv.data == TRUE | cna.data == TRUE)
+    }else if (input$SNV == TRUE & input$CNA == FALSE){
+      data2 <- data2 %>% 
+        filter(snv.data == TRUE)
+    }else if (input$CNA== TRUE & input$SNV == FALSE) {
+      data2 <- data2 %>% 
+        filter(cna.data == TRUE)
+    }else if (input$SNV & input$CNA){
+      data2 <- data2 %>% 
+        filter(cna.data == TRUE & snv.data ==TRUE)
+    }
     # data2 <- subset(data2, cna.data %in% input$CNA)
     # data2 <- subset(data2, snv.data %in% input$SNV)
     data2 <- data2 %>%
@@ -143,6 +170,19 @@ server <- function(input, output) {
     data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
     data3 <- subset(data3, type %in% input$Types)
     data3 <- subset(data3, class %in% input$Class)
+    if(input$ALL == TRUE){
+      data3 <- data3 %>%
+        filter(snv.data == TRUE | cna.data == TRUE)
+    }else if (input$SNV == TRUE & input$CNA == FALSE){
+      data3 <- data3 %>% 
+        filter(snv.data == TRUE)
+    }else if (input$CNA == TRUE & input$SNV == FALSE) {
+      data3 <- data3 %>% 
+        filter(cna.data == TRUE)
+    }else if (input$SNV & input$CNA){
+      data3 <- data3 %>% 
+        filter(cna.data == TRUE & snv.data ==TRUE)
+    }
     # data3 <- subset(data3, cna.data %in% input$CNA)
     # data3 <- subset(data3, snv.data %in% input$SNV)
     all2 <- data3 %>%
@@ -157,30 +197,13 @@ server <- function(input, output) {
   
 # quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
   
-  plist <- list()
+ 
   
   #data per barplot
   data_second_pannel <- reactive({
     data_pan_1 <- mw %>%
-                  slice_head(n = input$Gene_filter) %>%
-                  group_split()                                                 #object of type 'closure' is not subsettable
-    for(i in 1:length(data_pan_1)){
-      dn <- data_pan_1[[i]]
-      dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
-      dn <- subset(dn, type %in% input$Types)
-      dn <- subset(dn, class %in% input$Class)
-      p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
-        geom_bar(stat="identity") + coord_flip() +
-        facet_wrap(type~class,scales = 'free')
-      plist[[i]] <- ggplotGrob(p)
-    }
-    # dn <- subset(dn, types %in% input$Types)  #only 'grobs' allowed in "gList"
-    # dn <- subset(dn, class %in% input$Class)
-    # tagliamo  le prime 25 righe del tasate con slice_head(n=25), in questo caso in base a silde bar
-    # data_pan_1 <- subset(data_pan_1, type %in% input$Types)
-    # data_pan_1 <- subset(data_pan_1, class %in% input$Class)
-    # data_pan_1 <- data_pan_1 %>%
-    #               group_split() # risolvere perchè group split non permette di lavorare 
+                  slice_head(n = 2) %>%
+                  group_split()    
   })
   
   data_second_pannel_heatmap <- reactive({
@@ -235,7 +258,19 @@ server <- function(input, output) {
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################
   
-       output$barplot <- renderPlot({ grid.arrange(grobs=plist,ncol=4) 
+       output$barplot <- renderPlot({    
+     plist <- list()
+       for(i in 1:length(data_second_pannel)){
+         dn <- data_second_pannel[[i]]
+         dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
+         # dn <- subset(dn, type %in% input$Types)
+         # dn <- subset(dn, class %in% input$Class)
+         p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
+           geom_bar(stat="identity") + coord_flip() +
+           facet_wrap(type~class,scales = 'free')
+         plist[[i]] <- ggplotGrob(p)
+       }
+         grid.arrange(grobs=plist,ncol=4) 
     })
     
     output$heatmap <- renderPlot({ 
