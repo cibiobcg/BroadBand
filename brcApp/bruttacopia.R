@@ -217,6 +217,17 @@ server <- function(input, output) {
       filter(type != 'all')
   })
   
+  data_second_pannel_table <- reactive({
+    mw3<- mw %>%
+      slice_head(n = 25) %>%
+      group_split()
+    mat1 <- do.call(rbind,mw3)  
+    mat1 <- mat1[order(-mat1$w.mean),]  # ordinato per w.mean decrescente 
+    mat1 <- subset(mat1, type %in% input$Types)
+    mat1 <- subset(mat1, class %in% input$Class)
+    mat1 <- mat1 %>%
+      filter(type != 'all')
+  })
 ############### gestione combinazione tasti ALL - SNV - CNA #####################
   observeEvent(input$ALL,{
     if(input$ALL == TRUE){
@@ -280,7 +291,7 @@ server <- function(input, output) {
         scale_fill_gradient(low = "white", high = "red") +
         facet_wrap(~class)
     })
-    output$table2 <- renderDataTable(data_second_pannel_heatmap())
+    output$table2 <- renderDataTable(data_second_pannel_table())
 }
 
 # Run the application 
