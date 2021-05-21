@@ -65,7 +65,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
         ),
         # Show a plot of the generated distribution
         mainPanel(
-              tabsetPanel(type= 'tabs', id = 'tabs',
+              tabsetPanel(type= 'tabs', id = 'tabs',                           #aggisutare nomi dei pannelli
                 tabPanel(id='main', 'First screen',
                   fluidRow( # fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
                     column(6,plotOutput(outputId = 'myplot')),
@@ -201,9 +201,18 @@ server <- function(input, output) {
   
   #data per barplot
   data_second_pannel <- reactive({
-    data_pan_1 <- mw %>%
-                  slice_head(n = 2) %>%
-                  group_split()    
+    data_pan_1 <- mw
+    data_pan_1 <- subset(data_pan_1, class %in% input$Class)
+    data_pan_2 <- data_pan_1 %>% 
+                  filter(type == 'all')
+    data_pan_1 <- data_pan_1 %>% 
+                  filter(type != 'all')
+    data_pan_1 <- subset(data_pan_1, type %in% input$Types)
+    data_pan_3 <- data_pan_1 %>% 
+                rbind(data_pan_2)
+    data_pan_3 <- data_pan_3 %>%
+                  slice_head(n = input$Gene_filter)  %>%
+                  group_split()  
   })
   
   data_second_pannel_heatmap <- reactive({
@@ -219,7 +228,7 @@ server <- function(input, output) {
   
   data_second_pannel_table <- reactive({
     mw3<- mw %>%
-      slice_head(n = 25) %>%
+      slice_head(n = input$Gene_filter) %>%
       group_split()
     mat1 <- do.call(rbind,mw3)  
     mat1 <- mat1[order(-mat1$w.mean),]  # ordinato per w.mean decrescente 
@@ -269,11 +278,13 @@ server <- function(input, output) {
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################
   
-       output$barplot <- renderPlot({    
-     plist <- list()
-       for(i in 1:length(data_second_pannel)){
-         dn <- data_second_pannel[[i]]
+       output$barplot <- renderPlot({        
+         
+         plist <- list()
+       for(i in 1:length(data_second_pannel())){
+         dn <- data_second_pannel()[[i]]
          dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
+         # data_pan_1 <- data_pan_1[order(-data_pan_1$Hugo_Symbol),]
          # dn <- subset(dn, type %in% input$Types)
          # dn <- subset(dn, class %in% input$Class)
          p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
