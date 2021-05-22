@@ -28,9 +28,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
     # Sidebar with a slider input for number of bins 
     sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
         sidebarPanel('Options', # posso anche mettere un sottotitolo nella sidebar
-            #fileInput(
-             #   inputId = 'otherfile',
-              #  label = 'choose file'),
+            fileInput(
+              inputId = 'otherfile',
+              label = 'choose file'),
             checkboxInput(
               inputId = 'ALL',
               label = 'all',
@@ -65,8 +65,11 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
         ),
         # Show a plot of the generated distribution
         mainPanel(
-              tabsetPanel(type= 'tabs', id = 'tabs',                           #aggisutare nomi dei pannelli
-                tabPanel(id='main', 'First screen',
+              tabsetPanel(type= 'tabs', id = 'tabs',                           
+                tabPanel(id='main', 'Count pannel',
+                      downloadButton(outputId = 'download_myplot',label = 'Download count plot'),
+                      downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
+                      downloadButton(outputId = 'download_classtable',label = 'Download table'),
                   fluidRow( # fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
                     column(6,plotOutput(outputId = 'myplot')),
                     column(6,plotOutput(outputId = 'classplot' ))
@@ -75,19 +78,21 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                     column(3,dataTableOutput(outputId = 'classtable'))
                    )),
                 tabPanel(id ='sec', value = 2,
-                         'Second screen',
+                         'SNV pannel',
+                         downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
+                         downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
+                         downloadButton(outputId = 'download_table2',label = 'Download table'),
                    fluidRow(
                      column(6,plotOutput(outputId = 'barplot')),
                      column(6,plotOutput(outputId = 'heatmap'))
                    ),
                    fluidRow(
                      column(3,dataTableOutput(outputId = 'table2'))
-                   )
-                  ))
-                           # downloadButton(
-                            #  outputId = 'downloadPlot',
-                             # label = 'Download Plot'),
-                           
+                   )),
+                tabPanel(id = 'thrd', value = 3,
+                         'CNA pannel',
+                         )
+                )
                          )
                       )
                     ))
@@ -99,7 +104,6 @@ server <- function(input, output) {
   
   mw <- file2 %>%
     arrange(desc(w.mean))
-  
   #in questo modo sono risucito a rendere reattivo il file rawdata per tutte e tre i chechboxinput, in questo modo posson modificare i plot in base agli input dei checkbox della ui
   
   newData <- reactive({
@@ -123,8 +127,9 @@ server <- function(input, output) {
       data1 <- data1 %>% 
                 filter(cna.data == TRUE & snv.data ==TRUE)
     }
-    # data1 <- subset(data1, cna.data %in% input$CNA)
-    # data1 <- subset(data1, snv.data %in% input$SNV)
+    ggplot(data1, aes(x=type, y=n.samples, fill=class)) +
+      geom_bar(stat="identity") + 
+      scale_fill_manual(values=c('#999999','#E69F00'))
     })
   #rendo interattivo solo per tutti e tre i gli input ed ? resa interattiva!!
   
@@ -146,11 +151,15 @@ server <- function(input, output) {
       data2 <- data2 %>% 
         filter(cna.data == TRUE & snv.data ==TRUE)
     }
-    # data2 <- subset(data2, cna.data %in% input$CNA)
-    # data2 <- subset(data2, snv.data %in% input$SNV)
     data2 <- data2 %>%
         group_by(class,type) %>%
         summarise(n.samples= n_distinct(sample.id),n.patients=n_distinct(patient.id)) 
+   
+     ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
+      geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
+      scale_fill_manual(values=c('#999999','#E69F00')) +
+      geom_text(aes(label=n.samples)) + # questo comando serve per aggiungere la numerazione delle quantita', in qunato non si riesce a capire bene il numero reale senza indicazione
+      facet_wrap(~class)# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
     })
   
   # devo rendere reattivo all in modo che anche quest cambi con il cambiare della soruces, quindi cambino i valori man mano
@@ -161,13 +170,12 @@ server <- function(input, output) {
   
   #unicamente per la dataTable
   
-  # !!! eliminare le due colonne di cnv e snv come output? nope
   newData_table <- reactive({
     rawdata <- file %>%       
       group_by(data,class,type,cna.data,snv.data) %>%
       summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
     data3 <- rawdata 
-    data3 <- subset(data3, data %in% input$Resources) # problema con all perche' non e' nell'input ( quindi o non lo rendo reattivo, o inserisco nuovo input oopure boh?)
+    data3 <- subset(data3, data %in% input$Resources) 
     data3 <- subset(data3, type %in% input$Types)
     data3 <- subset(data3, class %in% input$Class)
     if(input$ALL == TRUE){
@@ -183,8 +191,6 @@ server <- function(input, output) {
       data3 <- data3 %>% 
         filter(cna.data == TRUE & snv.data ==TRUE)
     }
-    # data3 <- subset(data3, cna.data %in% input$CNA)
-    # data3 <- subset(data3, snv.data %in% input$SNV)
     all2 <- data3 %>%
           group_by(class,type) %>%
           summarise(n.samples_sum=sum(n.samples),n.patients_sum=sum(n.patients))%>% # sum somma, che e' diverso da n_dsitincr il quale e' un equivalnte della funzionelenght
@@ -195,9 +201,9 @@ server <- function(input, output) {
            rbind(all2)
     })
   
+#############################################################################################################
+##################################### Per secondo pannello ###################################################  
 # quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
-  
- 
   
   #data per barplot
   data_second_pannel <- reactive({
@@ -213,6 +219,18 @@ server <- function(input, output) {
     data_pan_3 <- data_pan_3 %>%
                   slice_head(n = input$Gene_filter)  %>%
                   group_split()  
+    
+    plist <- list()
+    for(i in 1:length(data_pan_3)){
+      dn <- data_pan_3[[i]]
+      dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
+      p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
+        geom_bar(stat="identity") + coord_flip() +
+        facet_wrap(type~class,scales = 'free')
+      plist[[i]] <- ggplotGrob(p)
+    }
+    grid.arrange(grobs=plist,ncol=4)
+    
   })
   
   data_second_pannel_heatmap <- reactive({
@@ -224,6 +242,12 @@ server <- function(input, output) {
     mat <- subset(mat, class %in% input$Class)
     mat <- mat %>%
       filter(type != 'all')
+    
+    ggplot(mat, aes(type, Hugo_Symbol)) +  
+      geom_tile(aes(fill = w.mean)) + 
+      geom_text(aes(label = round(w.mean, 3)),size=2) +
+      scale_fill_gradient(low = "white", high = "red") +
+      facet_wrap(~class)
   })
   
   data_second_pannel_table <- reactive({
@@ -258,52 +282,86 @@ server <- function(input, output) {
     } else {
               shinyjs::enable('ALL')
     }})
+#############################################################################################################
+##################################### Per primo pannello ###################################################
   
-       #plotting
+      #plotting
     output$myplot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        ggplot(newData(), aes(x=type, y=n.samples, fill=class)) +
-            geom_bar(stat="identity") + 
-            scale_fill_manual(values=c('#999999','#E69F00'))})
+            newData()
+        })
     output$classplot <- renderPlot({
-        ggplot(newData2(), aes(x=type,y=n.samples,fill=class)) +
-           geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
-           scale_fill_manual(values=c('#999999','#E69F00')) +
-           geom_text(aes(label=n.samples)) + # questo comando serve per aggiungere la numerazione delle quantita', in qunato non si riesce a capire bene il numero reale senza indicazione
-           facet_wrap(~class)})# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
+      newData2()
+       })
     
     #DataTable
     output$classtable <- renderDataTable(newData_table()) 
+    
+    #PER DOWNLOAD
+    output$download_myplot <- downloadHandler(
+                              filename = function(){'Count_plot.png'},
+                              content = function(file){
+                                ggsave(file,newData())
+                              }
+    )
+    
+    output$download_classplot <- downloadHandler(
+                                  filename = function(){
+                                    paste('Metastis_primary_plot.png')
+                                  },
+                                  content = function(file){
+                                    ggsave(file,newData2())
+      }
+    )
+
+    output$download_classtable <-  downloadHandler(
+                                   filename = function(){
+                                     paste('Count_table','.csv',sep = '')
+                                   },
+                                   content = function(file){
+                                     write.csv(newData_table(),file)
+      }
+    )
     
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################
   
        output$barplot <- renderPlot({        
-         
-         plist <- list()
-       for(i in 1:length(data_second_pannel())){
-         dn <- data_second_pannel()[[i]]
-         dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
-         # data_pan_1 <- data_pan_1[order(-data_pan_1$Hugo_Symbol),]
-         # dn <- subset(dn, type %in% input$Types)
-         # dn <- subset(dn, class %in% input$Class)
-         p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
-           geom_bar(stat="identity") + coord_flip() +
-           facet_wrap(type~class,scales = 'free')
-         plist[[i]] <- ggplotGrob(p)
-       }
-         grid.arrange(grobs=plist,ncol=4) 
+          data_second_pannel()
     })
     
-    output$heatmap <- renderPlot({ 
-      ggplot(data_second_pannel_heatmap(), aes(type, Hugo_Symbol)) +  
-        geom_tile(aes(fill = w.mean)) + 
-        geom_text(aes(label = round(w.mean, 3)),size=2) +
-        scale_fill_gradient(low = "white", high = "red") +
-        facet_wrap(~class)
+    output$heatmap <- renderPlot({ data_second_pannel_heatmap()
     })
     output$table2 <- renderDataTable(data_second_pannel_table())
+    
+    output$download_barplot<-  downloadHandler(
+      filename = function(){
+        paste('SNV_barplot','.pdf',sep = '')
+      },
+      content = function(file){
+        ggsave(file,data_second_pannel())
+        
+      }
+    )
+
+    output$download_heatmap <-  downloadHandler(
+      filename = function(){
+        paste('SNV_heatmap','.pdf',sep = '')
+      },
+      content = function(file){
+        ggsave(file,data_second_pannel_heatmap())
+        }
+    )
+
+    output$download_table2 <-  downloadHandler(
+      filename = function(){
+        paste('SNV_table','.csv',sep = '')
+      },
+      content = function(file){
+        write.csv(data_second_pannel_table(),file)
+       }
+    )
 }
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
