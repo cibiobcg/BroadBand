@@ -23,7 +23,8 @@ file2<- read.delim('snv_freq_brca.tsv', header = TRUE, stringsAsFactors = FALSE)
 ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
 goi <- readLines('genes_of_interest.txt')
 load('scna.RData')
-d <- read.delim('data-esempio-implementazione.tsv',header = TRUE, stringsAsFactors = FALSE)
+frq <- read.delim('data-esempio-implementazione.tsv',header = TRUE, stringsAsFactors = FALSE)
+d <- read.delim('data-esempio-implementazione2.tsv',header = TRUE, stringsAsFactors = FALSE)
 # Define UI for application that draws a histogram
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
@@ -77,10 +78,11 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                          choices = c('deletion' = 'homodel','amplification' = 'ampl'),
                          selected = 'ampl'),
       sliderInput(inputId = 'filter_median_freq',
-                  label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
+                  label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.02),
       selectInput(inputId ='Chromosomes',
                          label = 'Chromosomes',
-                         choices = c('All','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),
+                         choices = c('All','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
+                  selected = 'All'),
       selectInput(inputId = 'Cytoband',
                   label = 'Cytoband',
                   choices = c(''))
@@ -429,25 +431,29 @@ plotting <-  reactive({
       
       # plots 
       
-      # partendo caricando frq invece che direttamente d da problemi di calolco, perché?
+      # partendo caricando frq invece che direttamente d da problemi di calolco, perché? Errore : Warning in max(freq, na.rm = TRUE) :
+      # no non-missing arguments to max; returning -Inf
       br <- d %>% 
         filter(agg == TRUE) %>% 
         filter(median.freq > input$filter_median_freq) %>%
         filter(data != 'breast_msk_2018') %>% 
         add_column(max.name.goi = NA)
+      
+      if(input$Chromosomes != 'All'){
+        br <- br %>% 
+          filter(chr == input$Chromosomes)
+      }else{
+        br <- br
+      }
      
        # non posso collegare qua le resources, devo farlo da qualche altra parte perchè plot usa all brca, quindi avrei meno campione
       br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
       
       # per filtro cromosomi
-      # if(input$Chromosome != 'All'){
-      #  filter(br, chr == input$Chromosome)
-      # }else{
-      #   br
-      # }
+
 
       ggplot(br %>% filter(data == 'all_brca',scna == input$Groups), aes(x=band,y=median.freq,fill=arm)) +
-        ylab('median.freq by cytoband') +   # come cambaire didascali con aggiornatmento
+        ylab(paste(input$Groups ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
         geom_bar(stat = 'identity') +
         facet_wrap(~chr,scales = 'free_x') +
         scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
@@ -457,9 +463,13 @@ plotting <-  reactive({
         ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
         geom_point(data = br %>% filter(scna == input$Groups, data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
         geom_text(data = br %>% filter(scna == input$Groups, data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)
+    
    
       })
-   
+ 
+
+#con reactive e observer problema che selectinput nob rimande 'fermo' quando seleziono
+
 plotting2 <- reactive({
   # plots
   br <- d %>%
@@ -467,6 +477,13 @@ plotting2 <- reactive({
     filter(median.freq > input$filter_median_freq) %>%
     filter(data != 'breast_msk_2018') %>%
     add_column(max.name.goi = NA)
+  
+  if(input$Chromosomes != 'All'){
+    br <- br %>% 
+      filter(chr == input$Chromosomes)
+  }else{
+    br <- br
+  }
 
   # non posso collegare qua le resources, devo farlo da qualche altra parte perchè plot usa all brca, quindi avrei meno campione
   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
@@ -479,31 +496,32 @@ plotting2 <- reactive({
       bsel <- c(bsel,b)
     }
   }
-  updateSelectInput(session, inputId = 'Cytoband', choices = c(bsel))
 
-#   gfrq <- frq %>%
-#     filter(agg == TRUE, data != "breast_msk_2018") %>%
-#     filter(band == input$Cytoband) %>%
-#     mutate(is.goi = Hugo_Symbol %in% goi) %>%
-#     arrange(chr,start,end)
-# 
-#   ggplot(gfrq %>%                         #come si fa per i gene of interest come faccio?
-#            filter(data == 'all_brca',scna == input$Groups) %>%
-#            arrange(start,end) %>%
-#            distinct(Hugo_Symbol, .keep_all = TRUE) %>%
-#            mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)),
-#          aes(x=Hugo_Symbol,y=freq,fill=is.goi)) +
-#     ylab('freq') +
-#     geom_bar(stat = 'identity') +
-#     facet_wrap(~band,scales = 'free_x') +
-#     scale_x_discrete(guide = guide_axis(n.dodge=2)) +
-#     scale_fill_manual('is.goi',values = wes_palette("Royal1",n = 2)) +
-#     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-#     ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
-#     geom_point(data = gfrq %>% filter(scna == input$Groups, data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
-#     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
-# 
-#   
+   updateSelectInput(session, inputId = 'Cytoband', choices = c(bsel),selected = NULL)
+
+  gfrq <- frq %>%
+    filter(agg == TRUE, data != "breast_msk_2018") %>%
+    filter(band == input$Cytoband) %>%
+    mutate(is.goi = Hugo_Symbol %in% goi) %>%
+    arrange(chr,start,end)
+
+ ggplot(gfrq %>%                         
+           filter(data == 'all_brca',scna == input$Groups) %>%
+           arrange(start,end) %>%
+           distinct(Hugo_Symbol, .keep_all = TRUE) %>%
+           mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)),
+         aes(x=Hugo_Symbol,y=freq,fill=is.goi)) +
+    ylab(paste(input$Groups ,paste('freq', collapse=' '))) +
+    geom_bar(stat = 'identity') +
+    facet_wrap(~band,scales = 'free_x') +
+    scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+    scale_fill_manual('is.goi',values = wes_palette("Royal1",n = 2)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
+    geom_point(data = gfrq %>% filter(scna == input$Groups, data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
+    scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
+ 
+ 
 })
 
   
@@ -595,6 +613,7 @@ plotting2 <- reactive({
       plotting()
       }
     )
+    
     output$cytoband <- renderPlot({
       plotting2()
     }
