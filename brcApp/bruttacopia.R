@@ -34,7 +34,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
     titlePanel("App Breast Cancer"),
     # Sidebar with a slider input for number of bins 
     sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
-        sidebarPanel('Options', # posso anche mettere un sottotitolo nella sidebar
+        sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
             conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
                        condition = 'input.tabs== 1',
                 checkboxInput(
@@ -78,14 +78,15 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                          choices = c('deletion' = 'homodel','amplification' = 'ampl'),
                          selected = 'ampl'),
       sliderInput(inputId = 'filter_median_freq',
-                  label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.02),
+                  label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
       selectInput(inputId ='Chromosomes',
                          label = 'Chromosomes',
                          choices = c('All','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
                   selected = 'All'),
       selectInput(inputId = 'Cytoband',
                   label = 'Cytoband',
-                  choices = c(''))
+                  choices = c(''),
+                  multiple = FALSE)
       )
         ),
         # Show a plot of the generated ditribution
@@ -101,7 +102,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                     column(6,plotOutput(outputId = 'classplot' ))
                     ),
                   fluidRow(
-                    column(3,dataTableOutput(outputId = 'classtable'))
+                    column(6,dataTableOutput(outputId = 'classtable'))
                    )),
                 tabPanel(id ='sec', value = 2,
                          'SNV pannel',
@@ -113,27 +114,38 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                      column(6,plotOutput(outputId = 'heatmap'))
                    ),
                    fluidRow(
-                     column(3,dataTableOutput(outputId = 'table2'))
+                     column(6,dataTableOutput(outputId = 'table2'))
                    )),
                 tabPanel(id = 'thrd', value = 3,
                          'CNA pannel',
                          downloadButton(outputId = 'download_plots', label = 'downlaod chromosome plot'),
                          downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
-                         downloadButton(outputId = 'download_table', label = 'Download table'),
-                  fluidRow(
-                    column(12,plotOutput(outputId = 'plot'))
+                         downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
+                         downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
+                  fluidRow(style='height:80vh',
+                    column(12,plotOutput(outputId = 'plot',width = '125%'))
                   ),
                   fluidRow(
-                    column(12,plotOutput(outputId = 'cytoband'))
+                    column(12,plotOutput(outputId = 'cytoband', width = '125%'))
                   ),
-                  fluidRow(
-                    column(3, plotOutput(outputId = 'table'))
+                  fluidRow( 
+                    column(12,
+                           tabsetPanel(
+                             tabPanel('Chromosome',
+                                      fluidRow(
+                                        column(12,plotOutput(outputId = 'table_chromosome')))),
+                             tabPanel('Cytoband',
+                                      fluidRow(
+                                        column(12,plotOutput(outputId = 'table_cytoband'))))
+                          )
                   )
                          )
                 )
                          )
                       )
-                    ))
+                    )
+)
+)
 
 server <- function(input, output, session) {
 
@@ -468,10 +480,9 @@ plotting <-  reactive({
       })
  
 
-#con reactive e observer problema che selectinput nob rimande 'fermo' quando seleziono
+#con reactive e observer problema che selectinput non rimande 'fermo' quando seleziono
 
 plotting2 <- reactive({
-  # plots
   br <- d %>%
     filter(agg == TRUE) %>%
     filter(median.freq > input$filter_median_freq) %>%
@@ -479,7 +490,7 @@ plotting2 <- reactive({
     add_column(max.name.goi = NA)
   
   if(input$Chromosomes != 'All'){
-    br <- br %>% 
+    br <- br %>%
       filter(chr == input$Chromosomes)
   }else{
     br <- br
@@ -487,25 +498,30 @@ plotting2 <- reactive({
 
   # non posso collegare qua le resources, devo farlo da qualche altra parte perchè plot usa all brca, quindi avrei meno campione
   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
+  
+  bsel <- br %>% 
+          filter(agg == TRUE, scna == input$Groups) %>% 
+          pull(band) %>% 
+          unique()
+})
+  
+observe({
+  updateSelectInput(session, 'Cytoband', choices = plotting2() )
+})
 
-  bsel <- c()
-  for(b in unique(br$band)){
-    xd <- br %>% filter(band == b, agg == TRUE, scna == input$Groups)
-    th <- as.numeric(xd$max[which(xd$data == 'all_brca')])
-    if(all(th > as.numeric(xd$median.freq[which(xd$data != 'all_brca')]))){
-      bsel <- c(bsel,b)
-    }
-  }
-
-   updateSelectInput(session, inputId = 'Cytoband', choices = c(bsel),selected = NULL)
-
+                        
+plotting3 <-reactive({
+  selected_class <- input$Class
+  selected_type <- input$Types
+  selected_data <- input$Resources
+  
   gfrq <- frq %>%
     filter(agg == TRUE, data != "breast_msk_2018") %>%
     filter(band == input$Cytoband) %>%
     mutate(is.goi = Hugo_Symbol %in% goi) %>%
     arrange(chr,start,end)
 
- ggplot(gfrq %>%                         
+  ggplot(gfrq %>%                         
            filter(data == 'all_brca',scna == input$Groups) %>%
            arrange(start,end) %>%
            distinct(Hugo_Symbol, .keep_all = TRUE) %>%
@@ -520,14 +536,57 @@ plotting2 <- reactive({
     ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
     geom_point(data = gfrq %>% filter(scna == input$Groups, data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
- 
- 
+
 })
 
+
+chromosome_table <- reactive({
+  br <- d %>%
+    filter(agg == TRUE) %>%
+    filter(median.freq > input$filter_median_freq) %>%
+    filter(data != 'breast_msk_2018') %>%
+    add_column(max.name.goi = NA)
+  
+  if(input$Chromosomes != 'All'){
+    br <- br %>%
+      filter(chr == input$Chromosomes)
+  }else{
+    br <- br
+  }
+  br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
+  
+  br <- br %>% 
+    filter(data == 'all_brca', scna == input$Groups)
+})
   
   
-  
-  
+cytoband_table <- reactive({
+    br <- d %>%
+      filter(agg == TRUE) %>%
+      filter(median.freq > input$filter_median_freq) %>%
+      filter(data != 'breast_msk_2018') %>%
+      add_column(max.name.goi = NA)
+    
+    if(input$Chromosomes != 'All'){
+      br <- br %>%
+        filter(chr == input$Chromosomes)
+    }else{
+      br <- br
+    }
+    
+    # non posso collegare qua le resources, devo farlo da qualche altra parte perchè plot usa all brca, quindi avrei meno campione
+    br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
+    
+    gfrq <- frq %>%
+      filter(agg == TRUE, data != "breast_msk_2018") %>%
+      filter(band == input$Cytoband) %>%
+      mutate(is.goi = Hugo_Symbol %in% goi) %>%
+      arrange(chr,start,end) %>% 
+      filter(data == 'all_brca',scna == input$Groups) %>%
+      arrange(start,end) %>%
+      distinct(Hugo_Symbol, .keep_all = TRUE) %>%
+      mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
+  })
 #############################################################################################################
 ##################################### Per primo pannello ###################################################
   
@@ -609,36 +668,56 @@ plotting2 <- reactive({
 #############################################################################################################
 ##################################### Per terzo pannello ###################################################  
     
-    output$plot <- renderPlot({
+    output$plot <-renderPlot({
       plotting()
+      },height = 800
+    )
+    output$cytoband <- renderPlot({
+      plotting3()
+    })
+    
+    # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo 
+
+   output$table_chromosome <- renderDataTable(chromosome_table())
+
+   output$table_cytoband <- renderDataTable(cytoband_table())
+    
+    output$download_plots<-  downloadHandler(
+      filename = function(){
+        paste('Chromosome_plot','.pdf',sep = '')
+      },
+      content = function(file){
+        ggsave(file,plotting())
       }
     )
     
-    output$cytoband <- renderPlot({
-      plotting2()
+  output$download_cytoband<-  downloadHandler(
+    filename = function(){
+      paste('Chromosome_plot','.pdf',sep = '')
+    },
+    content = function(file){
+      ggsave(file,plotting3())
     }
     )
+
+    output$download_table_chromosome <-  downloadHandler(
+      filename = function(){
+        paste('CNA_table_chromosome','.csv',sep = '')
+      },
+      content = function(file){
+        write.csv(chromosome_table(),file)
+      }
+    )
     
-   # output$table <- renderDataTable() 
-    
-    # output$download_plots<-  downloadHandler(
-    #   filename = function(){
-    #     paste('CNA_plot','.pdf',sep = '')
-    #   },
-    #   content = function(file){
-    #     ggsave(file,)
-    #   }
-    # )
-    # 
-    # output$download_table <-  downloadHandler(
-    #   filename = function(){
-    #     paste('CNA_table','.csv',sep = '')
-    #   },
-    #   content = function(file){
-    #     write.csv(,file)
-    #   }
-    # )
-    
+    output$download_table_cytoband <-  downloadHandler(
+      filename = function(){
+        paste('CNA_table_cytoband','.csv',sep = '')
+      },
+      content = function(file){
+        write.csv(cytoband_table(),file)
+      }
+    )
+
 }
 
 
