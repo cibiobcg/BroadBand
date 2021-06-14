@@ -133,10 +133,10 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                            tabsetPanel(
                              tabPanel('Chromosome',
                                       fluidRow(
-                                        column(12,plotOutput(outputId = 'table_chromosome')))),
+                                        column(12,dataTableOutput(outputId = 'table_chromosome')))),
                              tabPanel('Cytoband',
                                       fluidRow(
-                                        column(12,plotOutput(outputId = 'table_cytoband'))))
+                                        column(12,dataTableOutput(outputId = 'table_cytoband'))))
                           )
                   )
                          )
@@ -678,9 +678,9 @@ cytoband_table <- reactive({
     
     # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo 
 
-   output$table_chromosome <- renderDataTable(chromosome_table())
+   output$table_chromosome <- renderDataTable({chromosome_table()})
 
-   output$table_cytoband <- renderDataTable(cytoband_table())
+   output$table_cytoband <- renderDataTable({cytoband_table()})
     
     output$download_plots<-  downloadHandler(
       filename = function(){
