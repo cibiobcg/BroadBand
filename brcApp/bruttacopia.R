@@ -1,12 +1,3 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(shinythemes)
 library(tidyverse)
@@ -35,44 +26,86 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
     # Sidebar with a slider input for number of bins 
     sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
         sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
-            conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
-                       condition = 'input.tabs== 1',
-                checkboxInput(
-                       inputId = 'ALL',
-                       label = 'all',
-                       value = TRUE),
-                checkboxInput(
-                       inputId = 'CNA',
-                       label = 'Somatic copy number alterations',
-                       value = FALSE),
-                checkboxInput(
-                       inputId = 'SNV',
-                       label = 'Somatic single nucleotide variants',
-                       value = FALSE),),
-            fileInput(
-              inputId = 'otherfile',
-              label = 'choose file'),
+         conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
+              condition = 'input.tabs== 1',
+              fileInput(
+                inputId = 'otherfile1',
+                label = 'choose tsv file',
+                multiple = TRUE,
+                accept = '.tsv'),
+              checkboxInput(
+                inputId = 'ALL',
+                label = 'all',
+                value = TRUE),
+              checkboxInput(
+                inputId = 'CNA',
+                label = 'Somatic copy number alterations',
+                value = FALSE),
+              checkboxInput(
+                inputId = 'SNV',
+                label = 'Somatic single nucleotide variants',
+                value = FALSE),
             checkboxGroupInput(
-                inputId = 'Resources',
+                inputId = 'Resources1',
                 label = 'Data resources',
                 choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
                 selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
             checkboxGroupInput(
-                inputId = 'Types',
+                inputId = 'Types1',
                 label = 'Breast cancer subtypes',
                 choices = c('HER2+','HR+','TNBC'),
                 selected = c('HER2+','HR+','TNBC')),
             checkboxGroupInput(
-                inputId = 'Class',
+                inputId = 'Class1',
+                label = 'Tumor classification',
+                choices = c('Primary','Metastasis'),
+                selected = c('Primary','Metastasis'))),
+    conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
+              condition = 'input.tabs== 2',
+              fileInput(
+                inputId = 'otherfile2',
+                label = 'choose tsv file',
+                multiple = TRUE,
+                accept = '.tsv'),
+              checkboxGroupInput(
+                inputId = 'Resources2',
+                label = 'Data resources',
+                choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
+                selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
+              checkboxGroupInput(
+                inputId = 'Types2',
+                label = 'Breast cancer subtypes',
+                choices = c('HER2+','HR+','TNBC'),
+                selected = c('HER2+','HR+','TNBC')),
+              checkboxGroupInput(
+                inputId = 'Class2',
                 label = 'Tumor classification',
                 choices = c('Primary','Metastasis'),
                 selected = c('Primary','Metastasis')),
-    conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
-              condition = 'input.tabs== 2',
-                sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25)
+              sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25)
               ),
     conditionalPanel(
       condition = 'input.tabs== 3',
+      fileInput(
+        inputId = 'otherfile3',
+        label = 'choose tsv file',
+        multiple = TRUE,
+        accept = '.tsv'),
+      checkboxGroupInput(
+        inputId = 'Resources3',
+        label = 'Data resources',
+        choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
+        selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
+      checkboxGroupInput(
+        inputId = 'Types3',
+        label = 'Breast cancer subtypes',
+        choices = c('HER2+','HR+','TNBC'),
+        selected = c('HER2+','HR+','TNBC')),
+      checkboxGroupInput(
+        inputId = 'Class3',
+        label = 'Tumor classification',
+        choices = c('Primary','Metastasis'),
+        selected = c('Primary','Metastasis')),
       radioButtons(inputId = 'Groups',
                          label = 'Choose',
                          choices = c('deletion' = 'homodel','amplification' = 'ampl'),
@@ -151,19 +184,46 @@ server <- function(input, output, session) {
 
 #############################################################################################################
 ##################################### Per primo pannello ###################################################
+
+observe({
+  if(is.null(input$otherfile1))
+      {
+        file <- file
+      }
+      else
+      {
+        file<- file
+        uploaded <- input$otherfile1
+        uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
+        file <- file %>%
+          rbind(uploaded2)
+    }
+  rawdata <- file %>%       
+  group_by(data,class,type,cna.data,snv.data) %>%
+  summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
+risorse <- rawdata$data[!duplicated(rawdata$data)]
+updateCheckboxGroupInput(session, 'Resources1', choices = risorse, selected = risorse)})
   
-  mw <- file2 %>%
-    arrange(desc(w.mean))
-  #in questo modo sono risucito a rendere reattivo il file rawdata per tutte e tre i chechboxinput, in questo modo posson modificare i plot in base agli input dei checkbox della ui
-  
-  newData <- reactive({
-    rawdata <- file %>%       
+newData <- reactive({
+  if(is.null(input$otherfile1))
+  {
+    file <- file
+  }
+  else
+  {
+    file<- file
+    uploaded <- input$otherfile1
+    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+    file <- file %>%
+      rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+  }
+  rawdata <- file%>%       
       group_by(data,class,type,cna.data,snv.data) %>%
       summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
     data1 <- rawdata
-    data1 <- subset(data1, data %in% input$Resources)
-    data1 <- subset(data1, type %in% input$Types)
-    data1 <- subset(data1, class %in% input$Class)
+    data1 <- subset(data1, data %in% input$Resources1)
+    data1 <- subset(data1, type %in% input$Types1)
+    data1 <- subset(data1, class %in% input$Class1)
     if(input$ALL == TRUE){
       data1 <- data1 %>%
               filter(snv.data == TRUE | cna.data == TRUE)
@@ -181,13 +241,24 @@ server <- function(input, output, session) {
       geom_bar(stat="identity") + 
       scale_fill_manual(values=c('#999999','#E69F00'))
     })
-  #rendo interattivo solo per tutti e tre i gli input ed ? resa interattiva!!
-  
+
   newData2 <- reactive({
+    if(is.null(input$otherfile1))
+    {
+      file <- file
+    }
+    else
+    {
+      file<- file
+      uploaded <- input$otherfile1
+      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+      file <- file %>%
+        rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+    }
     data2 <- file
-    data2 <- subset(data2, type %in% input$Types)
-    data2 <- subset(data2, data %in% input$Resources)
-    data2 <- subset(data2, class %in% input$Class)
+    data2 <- subset(data2, type %in% input$Types1)
+    data2 <- subset(data2, data %in% input$Resources1)
+    data2 <- subset(data2, class %in% input$Class1)
     if(input$ALL == TRUE){
       data2 <- data2 %>%
         filter(snv.data == TRUE | cna.data == TRUE)
@@ -218,16 +289,26 @@ server <- function(input, output, session) {
   #  summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
   #  add_column(data='all',.before = 'class')
   
-  #unicamente per la dataTable
-  
   newData_table <- reactive({
-    rawdata <- file %>%       
+    if(is.null(input$otherfile1))
+    {
+      file <- file
+    }
+    else
+    {
+      file<- file
+      uploaded <- input$otherfile1
+      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+      file <- file %>%
+        rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+    }
+    rawdata <- file%>%       
       group_by(data,class,type,cna.data,snv.data) %>%
       summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
     data3 <- rawdata 
-    data3 <- subset(data3, data %in% input$Resources) 
-    data3 <- subset(data3, type %in% input$Types)
-    data3 <- subset(data3, class %in% input$Class)
+    data3 <- subset(data3, data %in% input$Resources1) 
+    data3 <- subset(data3, type %in% input$Types1)
+    data3 <- subset(data3, class %in% input$Class1)
     if(input$ALL == TRUE){
       data3 <- data3 %>% 
         filter(snv.data == TRUE | cna.data == TRUE)
@@ -254,16 +335,18 @@ server <- function(input, output, session) {
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################  
 # quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
+  mw <- file2 %>%
+    arrange(desc(w.mean))
   
   #data per barplot
   data_second_pannel <- reactive({
     data_pan_1 <- mw
-    data_pan_1 <- subset(data_pan_1, class %in% input$Class)
+    data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
     data_pan_2 <- data_pan_1 %>% 
                   filter(type == 'all')
     data_pan_1 <- data_pan_1 %>% 
                   filter(type != 'all')
-    data_pan_1 <- subset(data_pan_1, type %in% input$Types)
+    data_pan_1 <- subset(data_pan_1, type %in% input$Types2)
     data_pan_3 <- data_pan_1 %>% 
                 rbind(data_pan_2)
     data_pan_3 <- data_pan_3 %>%
@@ -288,8 +371,8 @@ server <- function(input, output, session) {
           slice_head(n = input$Gene_filter) %>%
           group_split()
     mat <- do.call(rbind,mw2)
-    mat <- subset(mat, type %in% input$Types)
-    mat <- subset(mat, class %in% input$Class)
+    mat <- subset(mat, type %in% input$Types2)
+    mat <- subset(mat, class %in% input$Class2)
     mat <- mat %>%
       filter(type != 'all')
     
@@ -306,8 +389,8 @@ server <- function(input, output, session) {
       group_split()
     mat1 <- do.call(rbind,mw3)  
     mat1 <- mat1[order(-mat1$w.mean),]  # ordinato per w.mean decrescente 
-    mat1 <- subset(mat1, type %in% input$Types)
-    mat1 <- subset(mat1, class %in% input$Class)
+    mat1 <- subset(mat1, type %in% input$Types2)
+    mat1 <- subset(mat1, class %in% input$Class2)
     mat1 <- mat1 %>%
       filter(type != 'all')
   })
@@ -345,9 +428,9 @@ server <- function(input, output, session) {
     arrange(n)
   
 plotting <-  reactive({
-      selected_class <- input$Class
-      selected_type <- input$Types
-      selected_data <- input$Resources
+      selected_class <- input$Class3
+      selected_type <- input$Types3
+      selected_data <- input$Resources3
       # datalist <- dd[which(names(dd) %in% selected_data)]
       # 
       # FilterSCNA <- function(data_source_id, datalist, file, selected_type, selected_class){
@@ -511,9 +594,9 @@ observe({
 
                         
 plotting3 <-reactive({
-  selected_class <- input$Class
-  selected_type <- input$Types
-  selected_data <- input$Resources
+  selected_class <- input$Class3
+  selected_type <- input$Types3
+  selected_data <- input$Resources3
   
   gfrq <- frq %>%
     filter(agg == TRUE, data != "breast_msk_2018") %>%
