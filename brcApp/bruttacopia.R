@@ -192,7 +192,6 @@ observe({
       }
       else
       {
-        file<- file
         uploaded <- input$otherfile1
         uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
         file <- file %>%
@@ -279,15 +278,9 @@ newData <- reactive({
      ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
       geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
       scale_fill_manual(values=c('#999999','#E69F00')) +
-      geom_text(aes(label=n.samples)) + # questo comando serve per aggiungere la numerazione delle quantita', in qunato non si riesce a capire bene il numero reale senza indicazione
-      facet_wrap(~class)# serve per fare la divisione per classi --> in questo modo passo da un istogramma a 2 gfafici ad istogramma divisi tra metastatici e primari 
+      geom_text(aes(label=n.samples)) + 
+      facet_wrap(~class)
     })
-  
-  # devo rendere reattivo all in modo che anche quest cambi con il cambiare della soruces, quindi cambino i valori man mano
-  # all <- file %>% # in questo caso %>% indica al file sif di applicare l aseguente funzione che segue la 'pipe'
-  #  group_by(class,type) %>% # in questo caso il comando group_by singifica che il file vien raggruppato per classe e tipo, poi una volta applicato usa la seconda funzione che segue 
-  #  summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id)) %>% # summarise sommato creand onumer ocolonne pazienti e sample facendo la conta per i subtypes
-  #  add_column(data='all',.before = 'class')
   
   newData_table <- reactive({
     if(is.null(input$otherfile1))
@@ -298,9 +291,9 @@ newData <- reactive({
     {
       file<- file
       uploaded <- input$otherfile1
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
       file <- file %>%
-        rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+        rbind(uploaded2)
     }
     rawdata <- file%>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -324,22 +317,55 @@ newData <- reactive({
     }
     all2 <- data3 %>%
           group_by(class,type) %>%
-          summarise(n.samples_sum=sum(n.samples),n.patients_sum=sum(n.patients))%>% # sum somma, che e' diverso da n_dsitincr il quale e' un equivalnte della funzionelenght
+          summarise(n.samples_sum=sum(n.samples),n.patients_sum=sum(n.patients))%>% 
           add_column(data='all',.before = 'class')
     all2 <- all2 %>%
           rename(n.samples =n.samples_sum, n.patients = n.patients_sum)
     data3 <- data3 %>%
            rbind(all2)
     })
+  ############### gestione combinazione tasti ALL - SNV - CNA #####################
+  observeEvent(input$ALL,{
+    if(input$ALL == TRUE){
+      shinyjs::disable('CNA')
+      shinyjs::disable('SNV')
+    } else{
+      shinyjs::enable('CNA')
+      shinyjs::enable('SNV')
+    }})
+  observeEvent(input$CNA,{
+    if(input$CNA == TRUE){
+      shinyjs::disable('ALL')
+    } else{
+      shinyjs::enable('ALL')
+    }})
+  observeEvent(input$SNV,{
+    if(input$SNV == TRUE){
+      shinyjs::disable('ALL')
+    } else {
+      shinyjs::enable('ALL')
+    }})
   
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################  
-# quindi in questo caso riarriangiamo con arrange dati del file in modo decrescente con desc in base a w.mean (colonna)
-  mw <- file2 %>%
-    arrange(desc(w.mean))
   
   #data per barplot
   data_second_pannel <- reactive({
+    if(is.null(input$otherfile2))
+    {
+      mw <- file2 %>% 
+          arrange(desc(w.mean))
+    }
+    else
+    {
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
+
+      mw <- file2 %>%
+        rbind(uploaded4)
+      mw <- mw %>% 
+        arrange(desc(w.mean))
+    }
     data_pan_1 <- mw
     data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
     data_pan_2 <- data_pan_1 %>% 
@@ -367,6 +393,21 @@ newData <- reactive({
   })
   
   data_second_pannel_heatmap <- reactive({
+    if(is.null(input$otherfile2))
+    {
+      mw <- file2 %>% 
+        arrange(desc(w.mean))
+    }
+    else
+    {
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
+      
+      mw <- file2 %>%
+        rbind(uploaded4)
+      mw <- mw %>% 
+        arrange(desc(w.mean))
+    }
     mw2 <- mw %>%
           slice_head(n = input$Gene_filter) %>%
           group_split()
@@ -384,6 +425,21 @@ newData <- reactive({
   })
   
   data_second_pannel_table <- reactive({
+    if(is.null(input$otherfile2))
+    {
+      mw <- file2 %>% 
+        arrange(desc(w.mean))
+    }
+    else
+    {
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
+      
+      mw <- file2 %>%
+        rbind(uploaded4)
+      mw <- mw %>% 
+        arrange(desc(w.mean))
+    }
     mw3<- mw %>%
       slice_head(n = input$Gene_filter) %>%
       group_split()
@@ -394,29 +450,7 @@ newData <- reactive({
     mat1 <- mat1 %>%
       filter(type != 'all')
   })
-############### gestione combinazione tasti ALL - SNV - CNA #####################
-  observeEvent(input$ALL,{
-    if(input$ALL == TRUE){
-               shinyjs::disable('CNA')
-               shinyjs::disable('SNV')
-    } else{
-              shinyjs::enable('CNA')
-              shinyjs::enable('SNV')
-    }})
-  observeEvent(input$CNA,{
-    if(input$CNA == TRUE){
-                shinyjs::disable('ALL')
-    } else{
-                shinyjs::enable('ALL')
-    }})
-  observeEvent(input$SNV,{
-    if(input$SNV == TRUE){
-              shinyjs::disable('ALL')
-    } else {
-              shinyjs::enable('ALL')
-    }})
-  # observeEvent(input$)
-  
+
 #############################################################################################################
 ##################################### Per terzo pannello ###################################################  
   colnames(ensembl) <- c('ensg','start','end','chr','band','Hugo_Symbol')
