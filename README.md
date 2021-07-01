@@ -1,3 +1,3 @@
-# web based-resource for brest cancer genomic data exploration 
+# web based-resource in Shiny for breast cancer genomic data exploration 
 
 
