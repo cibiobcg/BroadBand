@@ -10,7 +10,7 @@ library(UpSetR)
 
 #loading files
 file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2<- read.delim('snv_freq_brca.tsv', header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type) 
+file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
 ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
 goi <- readLines('genes_of_interest.txt')
 load('scna.RData')
@@ -196,6 +196,7 @@ observe({
         uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
         file <- file %>%
           rbind(uploaded2)
+        
     }
   rawdata <- file %>%       
   group_by(data,class,type,cna.data,snv.data) %>%
@@ -212,9 +213,11 @@ newData <- reactive({
   {
     file<- file
     uploaded <- input$otherfile1
-    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
     file <- file %>%
-      rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+      rbind(uploaded2)
+    file <- file[-which(duplicated(file)), ]
+    
   }
   rawdata <- file%>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -250,9 +253,11 @@ newData <- reactive({
     {
       file<- file
       uploaded <- input$otherfile1
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) #Warning: Error in read.table: more columns than column names
+      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
       file <- file %>%
-        rbind(uploaded2)# Warning: Error in read.table: more columns than column names
+        rbind(uploaded2)
+      file <- file[-which(duplicated(file)), ]
+      
     }
     data2 <- file
     data2 <- subset(data2, type %in% input$Types1)
@@ -294,6 +299,8 @@ newData <- reactive({
       uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
       file <- file %>%
         rbind(uploaded2)
+      file <- file[-which(duplicated(file)), ]
+      
     }
     rawdata <- file%>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -348,23 +355,62 @@ newData <- reactive({
   
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################  
-  
-  #data per barplot
-  data_second_pannel <- reactive({
+  observe({
     if(is.null(input$otherfile2))
     {
-      mw <- file2 %>% 
-          arrange(desc(w.mean))
+      x <- file2
     }
     else
     {
-      uploaded3<- input$otherfile2
-      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
-
-      mw <- file2 %>%
-        rbind(uploaded4)
-      mw <- mw %>% 
+      uploaded <- input$otherfile2
+      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
+      x <- file2 %>%
+        rbind(uploaded2)
+    }
+    rawdatasecpan <- x %>%       
+      group_by(data)
+    risorse <- rawdatasecpan$data[!duplicated(rawdatasecpan$data)]
+    updateCheckboxGroupInput(session, 'Resources2', choices = risorse, selected = risorse)})
+  #data per barplot
+  data_second_pannel <- reactive({
+    
+    if(is.null(input$otherfile2))
+    {
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
+      mw <- m %>% 
         arrange(desc(w.mean))
+    }
+    else
+    {
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
+      
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE)
+      uploaded5 <- uploaded4 %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type)
+      
+      mw <- m %>%
+        rbind(uploaded5)
+      mw <- mw %>%
+        arrange(desc(w.mean)) 
+      
+      mw <- mw[-which(duplicated(mw)), ]
+      
     }
     data_pan_1 <- mw
     data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
@@ -395,18 +441,39 @@ newData <- reactive({
   data_second_pannel_heatmap <- reactive({
     if(is.null(input$otherfile2))
     {
-      mw <- file2 %>% 
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
+      mw <- m %>% 
         arrange(desc(w.mean))
     }
     else
     {
-      uploaded3<- input$otherfile2
-      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
       
-      mw <- file2 %>%
-        rbind(uploaded4)
-      mw <- mw %>% 
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE)
+      uploaded5 <- uploaded4 %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type)
+      
+      mw <- m %>%
+        rbind(uploaded5)
+      mw <- mw %>%
         arrange(desc(w.mean))
+      mw <- mw[-which(duplicated(mw)), ]
     }
     mw2 <- mw %>%
           slice_head(n = input$Gene_filter) %>%
@@ -427,18 +494,40 @@ newData <- reactive({
   data_second_pannel_table <- reactive({
     if(is.null(input$otherfile2))
     {
-      mw <- file2 %>% 
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
+      mw <- m %>% 
         arrange(desc(w.mean))
     }
     else
     {
-      uploaded3<- input$otherfile2
-      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE) %>% group_by(class,type)  
+      x<- file2
+      x <- subset(x, data %in% input$Resources2 )
+      m <- x %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type) 
       
-      mw <- file2 %>%
-        rbind(uploaded4)
-      mw <- mw %>% 
+      uploaded3<- input$otherfile2
+      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE)
+      uploaded5 <- uploaded4 %>% 
+        group_by(Hugo_Symbol,class,type) %>% 
+        summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
+        ungroup() %>% 
+        group_by(class,type)
+      
+      mw <- m %>%
+        rbind(uploaded5)
+      mw <- mw %>%
         arrange(desc(w.mean))
+      
+      mw <- mw[-which(duplicated(mw)), ]
     }
     mw3<- mw %>%
       slice_head(n = input$Gene_filter) %>%
