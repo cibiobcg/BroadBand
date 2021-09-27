@@ -110,9 +110,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                          label = 'Choose',
                          choices = c('deletion' = 'homodel','amplification' = 'ampl'),
                          selected = 'ampl'),
-      radioButtons(inputId = 'aberration_frequency',
-                   label = 'Aberration frequency',
-                   choices = c('4 ' = TRUE, '2' = FALSE),
+      radioButtons(inputId = 'copynumber_granularity',
+                   label = 'Copy number grnularity',
+                   choices = c('4 classes' = TRUE, '2 classes' = FALSE),
                    selected = TRUE),
       sliderInput(inputId = 'filter_median_freq',
                   label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
@@ -466,7 +466,7 @@ manipulation3 <-  reactive({
  #    # get freq by gene, by class and subtype
  #  qq <- Reduce(function(...) full_join(...,by='Hugo_Symbol'), filtered_datalist)
  # # 
- #  getfreq <- function(id,ds,qq,agg=input$aberration_frequency,flag=NA){
+ #  getfreq <- function(id,ds,qq,agg=input$copynumber_granularity,flag=NA){
  # 
  #          ss <- which(colnames(qq) %in% as.character(unlist(ds[id])))
  # 
@@ -507,9 +507,9 @@ manipulation3 <-  reactive({
  #        }
  # # # #  X fre aberrazione aggregatta e non aggregata
  # 
- #  out<- do.call(rbind,mclapply(names(ds),getfreq,ds,qq,agg=input$aberration_frequency,mc.cores= 2L)) %>%
- #          rbind(getfreq(id = setdiff(names(ds),"breast_msk_2018"),flag='all_brca',ds,qq,agg=input$aberration_frequency)) %>%
- #          add_column(agg=input$aberration_frequency) #impiega tanto
+ #  out<- do.call(rbind,mclapply(names(ds),getfreq,ds,qq,agg=input$copynumber_granularity,mc.cores= 2L)) %>%
+ #          rbind(getfreq(id = setdiff(names(ds),"breast_msk_2018"),flag='all_brca',ds,qq,agg=input$copynumber_granularity)) %>%
+ #          add_column(agg=input$copynumber_granularity) #impiega tanto
  # #       #out by gene
  # frq <- left_join(x = out, y=ensembl, by = 'Hugo_Symbol') %>%
  #         filter(!is.na(ensg)) %>%
