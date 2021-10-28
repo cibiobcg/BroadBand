@@ -13,9 +13,12 @@ file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = F
 file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
 ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
 goi <- readLines('genes_of_interest.txt')
-load('scna.RData') #aka dd 
-frq <- read.delim('data-esempio-implementazione.tsv',header = TRUE, stringsAsFactors = FALSE)
-d <- read.delim('data-esempio-implementazione2.tsv',header = TRUE, stringsAsFactors = FALSE)
+# load('scna.RData') #aka dd
+load('scna_data.RData')
+# load('outaggregati.RData')
+# load('outnoaggregat.RData')
+# frq <- read.delim('data-esempio-implementazione.tsv',header = TRUE, stringsAsFactors = FALSE)
+# d <- read.delim('data-esempio-implementazione2.tsv',header = TRUE, stringsAsFactors = FALSE)
 # Define UI for application that draws a histogram
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
@@ -59,7 +62,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 inputId = 'Class1',
                 label = 'Tumor classification',
                 choices = c('Primary','Metastasis'),
-                selected = c('Primary','Metastasis'))),
+                selected = c('Primary','Metastasis')),
+            actionButton("updatebutton1", "Proceed",icon("dna"),#paper-plane
+                         style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
     conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
               condition = 'input.tabs== 2',
               fileInput(
@@ -68,7 +73,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 multiple = TRUE,
                 accept = '.tsv'),
               checkboxGroupInput(
-                inputId = 'Resources2',
+                inputId = 'Resources2',  
                 label = 'Data resources',
                 choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
                 selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
@@ -82,7 +87,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 label = 'Tumor classification',
                 choices = c('Primary','Metastasis'),
                 selected = c('Primary','Metastasis')),
-              sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25)
+              sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25),
+              actionButton("updatebutton2", "Proceed",icon("dna"),#paper-plane
+                           style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
               ),
     conditionalPanel(
       condition = 'input.tabs== 3',
@@ -94,8 +101,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
       checkboxGroupInput(
         inputId = 'Resources3',
         label = 'Data resources',
-        choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
-        selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
+        choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'),
+        selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018')
+        ),
       checkboxGroupInput(
         inputId = 'Types3',
         label = 'Breast cancer subtypes',
@@ -106,14 +114,13 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
         label = 'Tumor classification',
         choices = c('Primary','Metastasis'),
         selected = c('Primary','Metastasis')),
-      radioButtons(inputId = 'Groups',
-                         label = 'Choose',
-                         choices = c('deletion' = 'homodel','amplification' = 'ampl'),
-                         selected = 'ampl'),
       radioButtons(inputId = 'copynumber_granularity',
-                   label = 'Copy number grnularity',
-                   choices = c('4 classes' = TRUE, '2 classes' = FALSE),
+                   label = 'Copy number granularity',
+                   choices = c('2 classes ' = TRUE, '4 classes' = FALSE),  # vedere se va bene senza true e false , inoltre aggiunger e
                    selected = TRUE),
+      radioButtons(inputId = 'Groups3',
+                         label = 'Choose',
+                         choices = c('')),
       sliderInput(inputId = 'filter_median_freq',
                   label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
       selectInput(inputId ='Chromosomes',
@@ -123,7 +130,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
       selectInput(inputId = 'Cytoband',
                   label = 'Cytoband',
                   choices = c(''),
-                  multiple = FALSE)
+                  multiple = FALSE),
+      actionButton("updatebutton3", "Proceed",icon("dna"),#paper-plane
+                   style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
       )
         ),
         # Show a plot of the generated ditribution
@@ -209,33 +218,52 @@ observe({
 manipulation1 <-reactive({
   if(is.null(input$otherfile1))
   {
-    file <- file
+    x1 <- file
   }
   else
   {
-    file<- file
+    x1<- file
     uploaded <- input$otherfile1
     uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
-    file <- file %>%
+    x1 <- x1 %>%
+      rbind(uploaded2)  }
+  return(x1)
+})
+  
+manipualtion1 <- eventReactive(input$updatebutton1,{
+  
+  if(is.null(input$otherfile1))
+  {
+    x1 <- file
+  }
+  else
+  {
+    x1<- file
+    uploaded <- input$otherfile1
+    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
+    x1 <- x1 %>%
       rbind(uploaded2)  }
   
-  if(input$ALL == TRUE){
-    file <- file %>%
+    if(input$ALL == TRUE){
+    x1 <- x1 %>%
       filter(snv.data == TRUE | cna.data == TRUE)
   }else if (input$SNV == TRUE & input$CNA == FALSE){
-    file <- file %>% 
+    x1 <- x1 %>% 
       filter(snv.data == TRUE)
   }else if (input$CNA == TRUE & input$SNV == FALSE) {
-    file <- file %>% 
+    x1 <- x1 %>% 
       filter(cna.data == TRUE)
   }else if (input$SNV & input$CNA){
-    file <- file %>% 
+    x1 <- x1 %>% 
       filter(cna.data == TRUE & snv.data ==TRUE)
   }
-  file <- subset(file, data %in% input$Resources1)
-  file  <- subset(file, type %in% input$Types1)
-  file <- subset(file, class %in% input$Class1)
-  })
+  x1 <- subset(file, data %in% input$Resources1)
+  x1  <- subset(file, type %in% input$Types1)
+  x1 <- subset(file, class %in% input$Class1)
+ 
+  return(x1)
+  
+   })
   
 newData <- reactive({
   data1 <- manipulation1()
@@ -361,7 +389,7 @@ newData2 <- reactive({
   })
   #data per barplot
   data_second_pannel <- reactive({
-    
+  
     data_pan_1 <- manipulation2()
     data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
     data_pan_2 <- data_pan_1 %>% 
@@ -421,263 +449,241 @@ data_second_pannel_table <- reactive({
 
 #############################################################################################################
 ##################################### Per terzo pannello ###################################################  
-  colnames(ensembl) <- c('ensg','start','end','chr','band','Hugo_Symbol')
-  ensembl$band <- paste0(ensembl$chr,ensembl$band)
+
+observe({
+  if(input$copynumber_granularity== TRUE){
+    updateRadioButtons(session,'Groups3',choices =c('deletion' = 'homodel','amplification' = 'ampl'),selected = 'ampl')
+  } else if(input$copynumber_granularity== FALSE){
+    updateRadioButtons(session,'Groups3',choices =c('homozygous deletion' = 'homodel','hemizygous deletion' = 'hemidel', 'gain' = 'gain','amplification' = 'ampl'),selected = 'ampl')
+  }
+})
   
-  check.ensembl <- ensembl %>%
+colnames(ensembl) <- c('ensg','start','end','chr','band','Hugo_Symbol')
+ensembl$band <- paste0(ensembl$chr,ensembl$band)
+  
+check.ensembl <- ensembl %>%
     group_by(band) %>% 
     summarise(n=n()) %>% 
     arrange(n)
 
-manipulation3 <-  reactive({
-      selected_class <- input$Class3
-      selected_type <- input$Types3
-      selected_data <- input$Reosurces3
-  # selected_class <- c('Metastasis','Primary') # possible options: 'Metastasis' 'Primary'
-  # 
-  # selected_type <- c('HR+','HER2+','TNBC') # possible options: 'HR+','HER2+','TNBC'
-  # 
-  # selected_data <- c("brca_igr_2015","brca_mbcproject_wagle_2017", "brca_metabric","brca_tcga_pan_can_atlas_2018","breast_msk_2018")
+observe({
+  if(is.null(input$otherfile3))
+  {
+    scna_data <- scna_data
+  }
+  else
+  {
+    scna_data<- scna_data
+    uploaded <- input$otherfile3
+    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
+    scna_data <- scna_data %>%
+      rbind(uploaded2)  
+  }
+  rawdataterzpan <- scna_data %>%       
+    group_by(Data)
+  resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
+  updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
+  
 
-      ##################################
- #   datalist <- dd[which(names(dd) %in% selected_data)]
- # 
- #   FilterSCNA <- function(data_source_id, datalist, file, selected_type, selected_class){
- # 
- #          sel <- file %>%
- #            filter(data == data_source_id, class %in% selected_class, type %in% selected_type) %>%
- #            pull(sample.id)
- # 
- #          if(length(sel) == 0){
- #            return( NA )
- #          } else{
- #            m <- datalist[[data_source_id]][,c('Hugo_Symbol',sel)]
- #            return(m)
- #          }
- #         }
- # 
- #  filtered_datalist <- mclapply(X = names(datalist), FUN = FilterSCNA, datalist, file, selected_type, selected_class, mc.cores = 2L)
- #  names(filtered_datalist) <- names(datalist)
- # 
- #  ds <- mclapply(names(filtered_datalist), FUN = function(x) setdiff(colnames(filtered_datalist[[x]]),'Hugo_Symbol'),mc.cores = 2L)
- #  names(ds) <- names(filtered_datalist)
- # 
- #  
- #    # get freq by gene, by class and subtype
- #  qq <- Reduce(function(...) full_join(...,by='Hugo_Symbol'), filtered_datalist)
- # # 
- #  getfreq <- function(id,ds,qq,agg=input$copynumber_granularity,flag=NA){
- # 
- #          ss <- which(colnames(qq) %in% as.character(unlist(ds[id])))
- # 
- #          if(!is.na(flag)){
- #            id <- flag
- #          }
- #          
- #          #capire perchè -hugosymbol
- # 
- #          df <- qq %>% select(c(1,all_of(ss)))
- #          nas <- which(rowSums(is.na(df %>% select(-Hugo_Symbol))) == ncol(df %>% select(-Hugo_Symbol))) #  no applicable method for 'select' applied to an object of class "function"
- #          
- #          if(length(nas) > 0){
- #            df %>% slice(-nas) #  no applicable method for 'select' applied to an object of class "function"
- #          } else{
- #            return(NA)
- #          }
- # 
- #          cna <- c(-2,-1,0,1,2)
- #          names(cna) <- c('homodel','hemidel','neutral','gain','ampl')
- # 
- #          if(agg){
- #            df[which(df == 1,arr.ind = T)] <- 2
- #            df[which(df == -1,arr.ind = T)] <- -2
- #          }
- # 
- #          compfreq <- function(n,cna,df,id){
- #            w <- data.frame(Hugo_Symbol=df$Hugo_Symbol,
- #                            scna=n,
- #                            freq=rowSums(df %>% select(-Hugo_Symbol) == as.numeric(cna[n]),na.rm = TRUE) / rowSums(!is.na(df %>% select(-Hugo_Symbol))),
- #                            data=paste(id,collapse = ';'),
- #                            stringsAsFactors = FALSE)
- #            return(w)
- #          }
- # 
- #          return(do.call(rbind,mclapply(names(cna),compfreq,cna,df,id,mc.cores = 2L)))
- # 
- #        }
- # # # #  X fre aberrazione aggregatta e non aggregata
- # 
- #  out<- do.call(rbind,mclapply(names(ds),getfreq,ds,qq,agg=input$copynumber_granularity,mc.cores= 2L)) %>%
- #          rbind(getfreq(id = setdiff(names(ds),"breast_msk_2018"),flag='all_brca',ds,qq,agg=input$copynumber_granularity)) %>%
- #          add_column(agg=input$copynumber_granularity) #impiega tanto
- # #       #out by gene
- # frq <- left_join(x = out, y=ensembl, by = 'Hugo_Symbol') %>%
- #         filter(!is.na(ensg)) %>%
- #         filter(chr != 'Y') %>%
- #         filter(scna != 'neutral')
- # 
- # d <- frq %>%
- #     group_by(data,scna,chr,band,agg) %>%
- #     summarise(n=n(),
- #           median.freq=median(freq,na.rm = T),
- #           max=max(freq,na.rm = TRUE),
- #           max.name=Hugo_Symbol[which.max(freq)]) %>%
- #     mutate(is.goi = max.name %in% goi) #ci mette un po'
- # 
- # d$arm <- rep('p',nrow(d))
- # d$arm[grep(d$band,pattern = 'q')] <- 'q'
+# # selected_class <- c('Metastasis','Primary') # possible options: 'Metastasis' 'Primary'
+# # 
+# # selected_type <- c('HR+','HER2+','TNBC') # possible options: 'HR+','HER2+','TNBC'
+# # 
+# # selected_data <- c("brca_igr_2015","brca_mbcproject_wagle_2017", "brca_metabric","brca_tcga_pan_can_atlas_2018") #all without metabric test
+# 
 
-      ###################################
+manipulation3 <- reactive({
+  if(is.null(input$otherfile3))
+  {
+    scna_data <- scna_data
+  }
+  else
+  {
+    scna_data<- scna_data
+    uploaded <- input$otherfile3
+    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
+    scna_data <- scna_data %>%
+      rbind(uploaded2)  
+  }
+  datasets <- scna_data %>%
+              na.omit() %>%
+              subset(Data %in% input$Resources3) %>% 
+              subset(Type %in% input$Types3) %>% #input$Types3
+              subset(Class %in% input$Class3) #input$Class3
 
-    # plots 
-      
- br <-d %>%
-    filter(agg == TRUE) %>%
-    filter(median.freq > input$filter_median_freq) %>%
-    filter(data != 'breast_msk_2018') %>%
-    add_column(max.name.goi = NA)  
-      
- if(input$Chromosomes != 'All'){
-     br <- br %>% 
-     filter(chr == input$Chromosomes)
- }else{
-   br <- br
-      }
-     
-       # non posso collegare qua le resources, devo farlo da qualche altra parte perchè plot usa all brca, quindi avrei meno campione
- br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-      
-      # per filtro cromosomi
- br #-> devi spsotare poi asticella a frq in quanto secondo plot parte da li 
+   if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
+     datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
+     datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
+     datasets$scna[datasets$scna == 0] <- 'neutral'
+    } else if (input$copynumber_granularity  == FALSE){ #input$copynumber_granularity
+      datasets$scna[datasets$scna == -2] <- 'homodel'
+      datasets$scna[datasets$scna == 2] <- 'ampl'
+      datasets$scna[datasets$scna == 0] <- 'neutral'
+      datasets$scna[datasets$scna == 1] <- 'gain'
+      datasets$scna[datasets$scna == -1] <- 'hemidel'
+    }
+            
+  all_brca <- datasets %>% 
+            group_by(Hugo_symbol,scna) %>% 
+            summarise(n= sum(n_samples)) %>% 
+            mutate(Data = 'all_brca') 
 
+  all_data <- datasets %>% 
+           group_by(Hugo_symbol,scna,Data) %>% 
+           summarise(n= sum(n_samples)) %>% 
+           select(Hugo_symbol,scna,n,Data) 
+
+  total <- all_data %>%      
+        group_by(Hugo_symbol) %>% 
+        summarise(tot = sum(n))   
+  
+  pre_final <- rbind(all_brca,all_data) 
+  
+  final <- full_join(pre_final,total,by= "Hugo_symbol") 
+  
+  out <- data.frame(Hugo_Symbol = final$Hugo_symbol,
+                           scna = final$scna,
+                           freq = final$n/final$tot,
+                           data = final$Data
+                           ) 
+
+  frq <- left_join(x = out, y=ensembl, by = 'Hugo_Symbol') %>%
+          filter(!is.na(ensg)) %>%
+          filter(chr != 'Y')
+  
+  if(input$Groups3 == 'ampl'){
+    frq<- frq %>% 
+      filter(scna == 'ampl')
+  }else if(input$Groups3 == 'homodel'){
+    frq <- frq %>% 
+      filter(scna == 'homodel')
+  }else if(input$Groups3 == 'gain'){
+    frq <- frq %>% 
+      filter(scna == 'gain')
+  }else if(input$Groups3 == 'hemidel'){
+    frq <- frq %>% 
+      filter(scna == 'hemidel')
+  }
+          
+  return(frq)
+  })
+ 
+manipulation4 <- reactive({
+  frq <- manipulation3()
+  
+  d <- frq %>%
+    group_by(data,scna,chr,band) %>% 
+    summarise(n=n(),
+              median.freq=median(freq,na.rm = TRUE),
+              max=max(freq,na.rm = TRUE), 
+              max.name=Hugo_Symbol[which.max(freq)]) %>% 
+    mutate(is.goi = max.name %in% goi)
+  
+  d$arm <- rep('p',nrow(d))
+  d$arm[grep(d$band,pattern = 'q')] <- 'q'
+  
+  br <-d %>% 
+    filter(median.freq > input$filter_median_freq) %>%       #input$filter_median_freq
+    add_column(max.name.goi = NA) 
+    
+
+  if(input$Chromosomes != 'All'){
+    br <- br %>%
+      filter(chr == input$Chromosomes)
+  }else{
+    br <- br
+  }
+  
+  br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
+
+  return(br)
 })
-   
+# observe({
+#   br <- manipulation4()
+#   selected<- br %>%
+#     filter( data != 'all_brca') 
+#   data_names <- selected$data%>%
+#     unique() %>% 
+#     droplevels()
+#   
+#   updateCheckboxGroupInput(session,'Resources3',selected = data_names )
+# })
+
 plotting <- reactive({
+   
+  br<- manipulation4() 
   
-  selected_class <- input$Class3
-  selected_type <- input$Types3
-  selected_data <- input$Reosurces3
-  
-  br <- manipulation3()
-  
-  ggplot(br%>% filter(data == 'all_brca',scna == input$Groups),aes(x=band,y=median.freq,fill=arm)) +
-    ylab(paste(input$Groups ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
+  ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
+    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
     geom_bar(stat = 'identity') +
-    facet_wrap(~chr,scales = 'free_x') +
+    facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
     scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 4)) +
-    geom_point(data = br %>% filter(scna == input$Groups, data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +
+    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
-    ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
-    geom_point(data =br %>% filter(scna == input$Groups, data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
-    geom_text(data = br %>% filter(scna == input$Groups, data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)
+    ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
+    geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
+    geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)
   
 })
 
-plotting2 <- reactive({
-   
-#   d <- frq %>%
-#     group_by(data,scna,chr,band,agg) %>%
-#     summarise(n=n(),
-#               median.freq=median(freq,na.rm = T),
-#               max=max(freq,na.rm = TRUE),
-#               max.name=Hugo_Symbol[which.max(freq)]) %>%
-#     mutate(is.goi = max.name %in% goi) #ci mette un po'
-# 
-#   br <- d %>%
-#     filter(agg == TRUE) %>%
-#     filter(median.freq > input$filter_median_freq) %>%
-#     filter(data != 'breast_msk_2018') %>%
-#     add_column(max.name.goi = NA)
-# 
-#   if(input$Chromosomes != 'All'){
-#     br <- br %>%
-#       filter(chr == input$Chromosomes)
-#   }else{
-#     br <- br
-#   }
-# 
-#   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-  br <- manipulation3()
+manipulation_cytoband <- reactive({
+  
+  br <- manipulation4()
   
   bsel <- br %>%
-          filter(agg == TRUE, scna == input$Groups) %>%
           pull(band) %>%
           unique()
+  return(bsel)
 })
 
 observe({
-  updateSelectInput(session, 'Cytoband', choices = plotting2() )
+  updateSelectInput(session, 'Cytoband', choices = manipulation_cytoband() )
 })
 
-
-plotting3 <-reactive({
-  selected_class <- input$Class3
-  selected_type <- input$Types3
-  selected_data <- input$Resources3
-
+plotting2 <-reactive({
+  
+  frq <- manipulation3() 
+  
   gfrq <- frq %>%
-    filter(agg == TRUE, data != "breast_msk_2018") %>%
     filter(band == input$Cytoband) %>%
+    filter(scna == input$Groups3) %>%
     mutate(is.goi = Hugo_Symbol %in% goi) %>%
     arrange(chr,start,end)
 
   ggplot(gfrq %>%
-           filter(data == 'all_brca',scna == input$Groups) %>%
+           filter(data == 'all_brca') %>%
            arrange(start,end) %>% 
            distinct(Hugo_Symbol, .keep_all = TRUE) %>%
            mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)),
          aes(x=Hugo_Symbol,y=freq,fill=is.goi)) +
-    ylab(paste(input$Groups ,paste('freq', collapse=' '))) +
+    ylab(paste(input$Groups3 ,paste('freq', collapse=' '))) +
     geom_bar(stat = 'identity') +
     facet_wrap(~band,scales = 'free_x') +
     scale_x_discrete(guide = guide_axis(n.dodge=2)) +
     scale_fill_manual('genes of interest',values = wes_palette("Royal1",n = 2)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(paste('class:',paste(selected_class,collapse = ','),'\ntype: ',paste(selected_type,collapse = ','))) +
-    geom_point(data = gfrq %>% filter(scna == input$Groups, data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
+    ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
+    geom_point(data = gfrq %>% filter(data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
-
 })
 
 
 chromosome_table <- reactive({
-#   d <- frq %>%
-#     group_by(data,scna,chr,band,agg) %>%
-#     summarise(n=n(),
-#               median.freq=median(freq,na.rm = T),
-#               max=max(freq,na.rm = TRUE),
-#               max.name=Hugo_Symbol[which.max(freq)]) %>%
-#     mutate(is.goi = max.name %in% goi) #ci mette un po'
-#   
-#   br <- d %>%
-#     filter(agg == TRUE) %>%
-#     filter(median.freq > input$filter_median_freq) %>%
-#     filter(data != 'breast_msk_2018') %>%
-#     add_column(max.name.goi = NA)
-# 
-#   if(input$Chromosomes != 'All'){
-#     br <- br %>%
-#       filter(chr == input$Chromosomes)
-#   }else{
-#     br <- br
-#   }
-#   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-  br <- manipulation3()
+  br <- manipulation4()
   
   br <- br %>%
-    filter(data == 'all_brca', scna == input$Groups)
+    filter(data == 'all_brca')
 })
 
-
 cytoband_table <- reactive({
-
+    
+    frq <- manipulation3()
     gfrq <- frq %>%
-      filter(agg == TRUE, data != "breast_msk_2018") %>%
       filter(band == input$Cytoband) %>%
       mutate(is.goi = Hugo_Symbol %in% goi) %>%
-      arrange(chr,start,end) %>%
-      filter(data == 'all_brca',scna == input$Groups) %>%
+      arrange(chr,start,end) %>%''
+      filter(data == 'all_brca') %>%
       arrange(start,end) %>%
       distinct(Hugo_Symbol, .keep_all = TRUE) %>%
       mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
@@ -768,7 +774,7 @@ cytoband_table <- reactive({
       },height = 800
     )
     output$cytoband <- renderPlot({
-      plotting3()
+      plotting2()
     })
 
     # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo
@@ -791,7 +797,7 @@ cytoband_table <- reactive({
       paste('Chromosome_plot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,plotting3())
+      ggsave(file,plotting2())
     }
     )
 
