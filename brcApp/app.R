@@ -825,4 +825,3 @@ cytoband_table <- reactive({
 # Run the application
 shinyApp(ui = ui, server = server)
 
-
