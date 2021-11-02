@@ -13,13 +13,7 @@ file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = F
 file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
 ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
 goi <- readLines('genes_of_interest.txt')
-# load('scna.RData') #aka dd
 load('scna_data.RData')
-# load('outaggregati.RData')
-# load('outnoaggregat.RData')
-# frq <- read.delim('data-esempio-implementazione.tsv',header = TRUE, stringsAsFactors = FALSE)
-# d <- read.delim('data-esempio-implementazione2.tsv',header = TRUE, stringsAsFactors = FALSE)
-# Define UI for application that draws a histogram
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 theme = shinytheme('superhero'),
@@ -114,13 +108,12 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
         label = 'Tumor classification',
         choices = c('Primary','Metastasis'),
         selected = c('Primary','Metastasis')),
-      radioButtons(inputId = 'copynumber_granularity',
+        radioButtons(inputId = 'copynumber_granularity',
                    label = 'Copy number granularity',
                    choices = c('2 classes ' = TRUE, '4 classes' = FALSE),  # vedere se va bene senza true e false , inoltre aggiunger e
                    selected = TRUE),
       radioButtons(inputId = 'Groups3',
-                         label = 'Choose',
-                         choices = c('')),
+                         label = 'Choose',choices =c('deletion' = 'homodel','amplification' = 'ampl'),selected = 'ampl'),
       sliderInput(inputId = 'filter_median_freq',
                   label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
       selectInput(inputId ='Chromosomes',
@@ -130,10 +123,9 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
       selectInput(inputId = 'Cytoband',
                   label = 'Cytoband',
                   choices = c(''),
-                  multiple = FALSE),
+                  multiple = FALSE),   
       actionButton("updatebutton3", "Proceed",icon("dna"),#paper-plane
-                   style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
-      )
+              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))
         ),
         # Show a plot of the generated ditribution
         mainPanel(
@@ -215,7 +207,7 @@ observe({
   risorse <- rawdata$data[!duplicated(rawdata$data)]
   updateCheckboxGroupInput(session, 'Resources1', choices = risorse, selected = risorse)})
 
-manipulation1 <-reactive({
+manipulation1 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
   if(is.null(input$otherfile1))
   {
     x1 <- file
@@ -227,24 +219,8 @@ manipulation1 <-reactive({
     uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
     x1 <- x1 %>%
       rbind(uploaded2)  }
-  return(x1)
-})
-  
-manipualtion1 <- eventReactive(input$updatebutton1,{
-  
-  if(is.null(input$otherfile1))
-  {
-    x1 <- file
-  }
-  else
-  {
-    x1<- file
-    uploaded <- input$otherfile1
-    uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
-    x1 <- x1 %>%
-      rbind(uploaded2)  }
-  
-    if(input$ALL == TRUE){
+
+ if(input$ALL == TRUE){
     x1 <- x1 %>%
       filter(snv.data == TRUE | cna.data == TRUE)
   }else if (input$SNV == TRUE & input$CNA == FALSE){
@@ -388,7 +364,7 @@ newData2 <- reactive({
     }
   })
   #data per barplot
-  data_second_pannel <- reactive({
+  data_second_pannel <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
   
     data_pan_1 <- manipulation2()
     data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
@@ -416,7 +392,7 @@ newData2 <- reactive({
     
   })
   
-data_second_pannel_heatmap <- reactive({
+data_second_pannel_heatmap <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
     mw <- manipulation2()
     mw2 <- mw %>%
           slice_head(n = input$Gene_filter) %>%
@@ -434,7 +410,7 @@ data_second_pannel_heatmap <- reactive({
       facet_wrap(~class)
   })
   
-data_second_pannel_table <- reactive({
+data_second_pannel_table <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
     mw <- manipulation2()
     mw3<- mw %>%
       slice_head(n = input$Gene_filter) %>%
@@ -451,20 +427,20 @@ data_second_pannel_table <- reactive({
 ##################################### Per terzo pannello ###################################################  
 
 observe({
-  if(input$copynumber_granularity== TRUE){
+  if(input$copynumber_granularity== FALSE){
+        updateRadioButtons(session,'Groups3',choices =c('homozygous deletion' = 'homodel','hemizygous deletion' = 'hemidel', 'gain' = 'gain','amplification' = 'ampl'),selected = 'ampl')
+  }else{
     updateRadioButtons(session,'Groups3',choices =c('deletion' = 'homodel','amplification' = 'ampl'),selected = 'ampl')
-  } else if(input$copynumber_granularity== FALSE){
-    updateRadioButtons(session,'Groups3',choices =c('homozygous deletion' = 'homodel','hemizygous deletion' = 'hemidel', 'gain' = 'gain','amplification' = 'ampl'),selected = 'ampl')
   }
 })
-  
+
 colnames(ensembl) <- c('ensg','start','end','chr','band','Hugo_Symbol')
 ensembl$band <- paste0(ensembl$chr,ensembl$band)
-  
+
 check.ensembl <- ensembl %>%
-    group_by(band) %>% 
-    summarise(n=n()) %>% 
-    arrange(n)
+  group_by(band) %>% 
+  summarise(n=n()) %>% 
+  arrange(n)
 
 observe({
   if(is.null(input$otherfile3))
@@ -483,16 +459,8 @@ observe({
     group_by(Data)
   resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
   updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
-  
 
-# # selected_class <- c('Metastasis','Primary') # possible options: 'Metastasis' 'Primary'
-# # 
-# # selected_type <- c('HR+','HER2+','TNBC') # possible options: 'HR+','HER2+','TNBC'
-# # 
-# # selected_data <- c("brca_igr_2015","brca_mbcproject_wagle_2017", "brca_metabric","brca_tcga_pan_can_atlas_2018") #all without metabric test
-# 
-
-manipulation3 <- reactive({
+manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
   if(is.null(input$otherfile3))
   {
     scna_data <- scna_data
@@ -506,50 +474,50 @@ manipulation3 <- reactive({
       rbind(uploaded2)  
   }
   datasets <- scna_data %>%
-              na.omit() %>%
-              subset(Data %in% input$Resources3) %>% 
-              subset(Type %in% input$Types3) %>% #input$Types3
-              subset(Class %in% input$Class3) #input$Class3
-
-   if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
-     datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
-     datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
-     datasets$scna[datasets$scna == 0] <- 'neutral'
-    } else if (input$copynumber_granularity  == FALSE){ #input$copynumber_granularity
-      datasets$scna[datasets$scna == -2] <- 'homodel'
-      datasets$scna[datasets$scna == 2] <- 'ampl'
-      datasets$scna[datasets$scna == 0] <- 'neutral'
-      datasets$scna[datasets$scna == 1] <- 'gain'
-      datasets$scna[datasets$scna == -1] <- 'hemidel'
-    }
-            
+    na.omit() %>%
+    subset(Data %in% input$Resources3) %>% 
+    subset(Type %in% input$Types3) %>% #input$Types3
+    subset(Class %in% input$Class3) #input$Class3
+  
+  if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
+    datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
+    datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
+    datasets$scna[datasets$scna == 0] <- 'neutral'
+  } else{ #input$copynumber_granularity
+    datasets$scna[datasets$scna == -2] <- 'homodel'
+    datasets$scna[datasets$scna == 2] <- 'ampl'
+    datasets$scna[datasets$scna == 0] <- 'neutral'
+    datasets$scna[datasets$scna == 1] <- 'gain'
+    datasets$scna[datasets$scna == -1] <- 'hemidel'
+  }
+  
   all_brca <- datasets %>% 
-            group_by(Hugo_symbol,scna) %>% 
-            summarise(n= sum(n_samples)) %>% 
-            mutate(Data = 'all_brca') 
-
+    group_by(Hugo_symbol,scna) %>% 
+    summarise(n= sum(n_samples)) %>% 
+    mutate(Data = 'all_brca') 
+  
   all_data <- datasets %>% 
-           group_by(Hugo_symbol,scna,Data) %>% 
-           summarise(n= sum(n_samples)) %>% 
-           select(Hugo_symbol,scna,n,Data) 
-
+    group_by(Hugo_symbol,scna,Data) %>% 
+    summarise(n= sum(n_samples)) %>% 
+    select(Hugo_symbol,scna,n,Data) 
+  
   total <- all_data %>%      
-        group_by(Hugo_symbol) %>% 
-        summarise(tot = sum(n))   
+    group_by(Hugo_symbol) %>% 
+    summarise(tot = sum(n))   
   
   pre_final <- rbind(all_brca,all_data) 
   
   final <- full_join(pre_final,total,by= "Hugo_symbol") 
   
   out <- data.frame(Hugo_Symbol = final$Hugo_symbol,
-                           scna = final$scna,
-                           freq = final$n/final$tot,
-                           data = final$Data
-                           ) 
-
+                    scna = final$scna,
+                    freq = final$n/final$tot,
+                    data = final$Data
+  ) 
+  
   frq <- left_join(x = out, y=ensembl, by = 'Hugo_Symbol') %>%
-          filter(!is.na(ensg)) %>%
-          filter(chr != 'Y')
+    filter(!is.na(ensg)) %>%
+    filter(chr != 'Y')
   
   if(input$Groups3 == 'ampl'){
     frq<- frq %>% 
@@ -564,11 +532,11 @@ manipulation3 <- reactive({
     frq <- frq %>% 
       filter(scna == 'hemidel')
   }
-          
+  
   return(frq)
-  })
- 
-manipulation4 <- reactive({
+})
+
+manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
   frq <- manipulation3()
   
   d <- frq %>%
@@ -580,13 +548,13 @@ manipulation4 <- reactive({
     mutate(is.goi = max.name %in% goi)
   
   d$arm <- rep('p',nrow(d))
-  d$arm[grep(d$band,pattern = 'q')] <- 'q'
+  d$arm[grep(d$band,pattern =  'q')] <- 'q'
   
   br <-d %>% 
-    filter(median.freq > input$filter_median_freq) %>%       #input$filter_median_freq
+    filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
     add_column(max.name.goi = NA) 
-    
-
+  
+  
   if(input$Chromosomes != 'All'){
     br <- br %>%
       filter(chr == input$Chromosomes)
@@ -595,22 +563,12 @@ manipulation4 <- reactive({
   }
   
   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-
+  
   return(br)
 })
-# observe({
-#   br <- manipulation4()
-#   selected<- br %>%
-#     filter( data != 'all_brca') 
-#   data_names <- selected$data%>%
-#     unique() %>% 
-#     droplevels()
-#   
-#   updateCheckboxGroupInput(session,'Resources3',selected = data_names )
-# })
 
-plotting <- reactive({
-   
+plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  
   br<- manipulation4() 
   
   ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
@@ -627,37 +585,46 @@ plotting <- reactive({
   
 })
 
-manipulation_cytoband <- reactive({
+manipulation_cytoband2 <- reactive({
   
   br <- manipulation4()
   
   bsel <- br %>%
-          pull(band) %>%
-          unique()
+    pull(band) %>%
+    str_sort(numeric = TRUE) %>% 
+    unique() 
+
   return(bsel)
 })
 
 observe({
-  updateSelectInput(session, 'Cytoband', choices = manipulation_cytoband() )
+  updateSelectInput(session, 'Cytoband', choices = manipulation_cytoband2())
 })
 
-plotting2 <-reactive({
+manipulation_cytoband <- reactive({
   
-  frq <- manipulation3() 
+  frq <- manipulation3()
   
   gfrq <- frq %>%
     filter(band == input$Cytoband) %>%
     filter(scna == input$Groups3) %>%
     mutate(is.goi = Hugo_Symbol %in% goi) %>%
     arrange(chr,start,end)
-
+  
+  return(gfrq)
+  
+})
+plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
+   
+  gfrq <- manipulation_cytoband() 
+  
   ggplot(gfrq %>%
            filter(data == 'all_brca') %>%
            arrange(start,end) %>% 
            distinct(Hugo_Symbol, .keep_all = TRUE) %>%
            mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)),
          aes(x=Hugo_Symbol,y=freq,fill=is.goi)) +
-    ylab(paste(input$Groups3 ,paste('freq', collapse=' '))) +
+    ylab(paste(input$Groups3 ,paste('freq', collapse=' '))) + 
     geom_bar(stat = 'identity') +
     facet_wrap(~band,scales = 'free_x') +
     scale_x_discrete(guide = guide_axis(n.dodge=2)) +
@@ -669,25 +636,25 @@ plotting2 <-reactive({
 })
 
 
-chromosome_table <- reactive({
+chromosome_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
   br <- manipulation4()
   
   br <- br %>%
     filter(data == 'all_brca')
+
 })
 
-cytoband_table <- reactive({
-    
-    frq <- manipulation3()
-    gfrq <- frq %>%
-      filter(band == input$Cytoband) %>%
-      mutate(is.goi = Hugo_Symbol %in% goi) %>%
-      arrange(chr,start,end) %>%''
-      filter(data == 'all_brca') %>%
-      arrange(start,end) %>%
-      distinct(Hugo_Symbol, .keep_all = TRUE) %>%
-      mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
-  })
+cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  
+  gfrq <- manipulation_cytoband()
+  
+  gfrq <-gfrq %>% 
+    filter(data == 'all_brca') %>%
+    arrange(start,end) %>%
+    distinct(Hugo_Symbol, .keep_all = TRUE) %>%
+    mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
+  
+})
 ############################################################################################################
 ##################################### Per primo pannello ###################################################
 
@@ -824,4 +791,5 @@ cytoband_table <- reactive({
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
 
