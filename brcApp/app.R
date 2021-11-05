@@ -18,8 +18,10 @@ load('scna_data.RData')
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 theme = shinytheme('superhero'),
                 shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna  
+            
     # Application title
-    titlePanel("App Breast Cancer"),
+    titlePanel(
+       div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA" )),
     # Sidebar with a slider input for number of bins 
     sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
         sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
@@ -57,7 +59,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 label = 'Tumor classification',
                 choices = c('Primary','Metastasis'),
                 selected = c('Primary','Metastasis')),
-            actionButton("updatebutton1", "Proceed",icon("dna"),#paper-plane
+            actionButton("updatebutton1", "Apply",icon("dna"),#paper-plane
                          style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
     conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
               condition = 'input.tabs== 2',
@@ -82,7 +84,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 choices = c('Primary','Metastasis'),
                 selected = c('Primary','Metastasis')),
               sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25),
-              actionButton("updatebutton2", "Proceed",icon("dna"),#paper-plane
+              actionButton("updatebutton2", "Apply",icon("dna"),#paper-plane
                            style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
               ),
     conditionalPanel(
@@ -124,7 +126,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                   label = 'Cytoband',
                   choices = c(''),
                   multiple = FALSE),   
-      actionButton("updatebutton3", "Proceed",icon("dna"),#paper-plane
+      actionButton("updatebutton3", "Apply",icon("dna"),#paper-plane
               style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))
         ),
         # Show a plot of the generated ditribution
@@ -189,6 +191,7 @@ server <- function(input, output, session) {
 
 #############################################################################################################
 ##################################### Per primo pannello ###################################################
+
 observe({
   if(is.null(input$otherfile1))
       {
@@ -206,8 +209,9 @@ observe({
     summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
   risorse <- rawdata$data[!duplicated(rawdata$data)]
   updateCheckboxGroupInput(session, 'Resources1', choices = risorse, selected = risorse)})
+  
 
-manipulation1 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
+manipulation1 <-reactive({
   if(is.null(input$otherfile1))
   {
     x1 <- file
@@ -233,41 +237,63 @@ manipulation1 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,
     x1 <- x1 %>% 
       filter(cna.data == TRUE & snv.data ==TRUE)
   }
-  x1 <- subset(file, data %in% input$Resources1)
-  x1  <- subset(file, type %in% input$Types1)
-  x1 <- subset(file, class %in% input$Class1)
- 
+  x1 <- file
+
+  x1 <- x1 %>%
+    subset(data %in% input$Resources1) %>%
+    subset(type %in% input$Types1) %>%
+    subset(class %in% input$Class1)
+  
   return(x1)
   
    })
   
-newData <- reactive({
+newData <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,
   data1 <- manipulation1()
   
   data1 <- data1%>%       
     group_by(data,class,type,cna.data,snv.data) %>%
     summarise(n.samples=n_distinct(sample.id),n.patients=n_distinct(patient.id))
-    
-    ggplot(data1, aes(x=type, y=n.samples, fill=class)) +
+  
+  if(nrow(data1) == 0){
+    df <- data.frame()
+    ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) + 
+      annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+      annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+      annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+      annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+      geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+      annotate("text", x=5, y=3, size=6, col="red", label="No Data") 
+  }else{
+  ggplot(data1, aes(x=type, y=n.samples, fill=class)) +
       geom_bar(stat="identity") + 
-      scale_fill_manual(values=c('#999999','#E69F00'))
+        scale_fill_manual(values=c('#999999','#E69F00'))}
     })
 
-newData2 <- reactive({
+newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
     data2 <- manipulation1()
     
     data2 <- data2 %>%
         group_by(class,type) %>%
         summarise(n.samples= n_distinct(sample.id),n.patients=n_distinct(patient.id)) 
-   
+    if(nrow(data2) == 0){
+      df <- data.frame()
+      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) + 
+        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+        annotate("text", x=5, y=3, size=6, col="red", label="No Data") 
+    }else{
      ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
       geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
       scale_fill_manual(values=c('#999999','#E69F00')) +
       geom_text(aes(label=n.samples)) + 
-      facet_wrap(~class)
+      facet_wrap(~class)}
     })
   
-  newData_table <- reactive({
+  newData_table <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
     data3 <- manipulation1()
     
     data3 <- data3%>%       
@@ -328,7 +354,11 @@ newData2 <- reactive({
     if(is.null(input$otherfile2))
     {
       x<- file2
-      x <- subset(x, data %in% input$Resources2 )
+      x <- filter(x, data %in% input$Resources2 )
+      # resources <- c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')
+      # classes <- c('Primary','Metastasis')
+      # Types <- c('HER2+','HR+','TNBC')
+      # x <- filter(x,data %in% resources )
       m <- x %>% 
         group_by(Hugo_Symbol,class,type) %>% 
         summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
@@ -336,11 +366,12 @@ newData2 <- reactive({
         group_by(class,type) 
       mw <- m %>% 
         arrange(desc(w.mean))
+      
     }
     else
     {
       x<- file2
-      x <- subset(x, data %in% input$Resources2 )
+      x <- filter(x, data %in% input$Resources2 )
       m <- x %>% 
         group_by(Hugo_Symbol,class,type) %>% 
         summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
@@ -366,13 +397,17 @@ newData2 <- reactive({
   #data per barplot
   data_second_pannel <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
   
+    # se tolgo tutti types rimangono comunque gli all, ma un table non ci sono gli all va comunque bene?
+    
     data_pan_1 <- manipulation2()
-    data_pan_1 <- subset(data_pan_1, class %in% input$Class2)
+    data_pan_1 <- filter(data_pan_1, class %in% input$Class2)
+    # data_pan_1 <- filter(data_pan_1, class %in% classes)
     data_pan_2 <- data_pan_1 %>% 
                   filter(type == 'all')
     data_pan_1 <- data_pan_1 %>% 
                   filter(type != 'all')
-    data_pan_1 <- subset(data_pan_1, type %in% input$Types2)
+    data_pan_1 <- filter(data_pan_1, type %in% input$Types2)
+    # data_pan_1 <- filter(data_pan_1, type %in% Types)
     data_pan_3 <- data_pan_1 %>% 
                 rbind(data_pan_2)
     data_pan_3 <- data_pan_3 %>%
@@ -380,6 +415,16 @@ newData2 <- reactive({
                   group_split()  
     
     plist <- list()
+    if(length(data_pan_3) == 0){
+      df <- data.frame()
+      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+        annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+    }else{
     for(i in 1:length(data_pan_3)){
       dn <- data_pan_3[[i]]
       dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
@@ -389,29 +434,41 @@ newData2 <- reactive({
       plist[[i]] <- ggplotGrob(p)
     }
     grid.arrange(grobs=plist,ncol=4)
-    
+  }
   })
   
 data_second_pannel_heatmap <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
     mw <- manipulation2()
+    if(nrow(mw) == 0){
+      df <- data.frame()
+      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+        annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+    }else{
     mw2 <- mw %>%
           slice_head(n = input$Gene_filter) %>%
           group_split()
-    mat <- do.call(rbind,mw2)
-    mat <- subset(mat, type %in% input$Types2)
-    mat <- subset(mat, class %in% input$Class2)
-    mat <- mat %>%
-      filter(type != 'all')
-    
-    ggplot(mat, aes(type, Hugo_Symbol)) +  
+    mat <- do.call(rbind,mw2)    
+    mat <- filter(mat, type %in% input$Types2)
+    mat <- filter(mat, class %in% input$Class2)
+
+    ggplot(mat, aes(type, Hugo_Symbol)) +
       geom_tile(aes(fill = w.mean)) + 
       geom_text(aes(label = round(w.mean, 3)),size=2) +
       scale_fill_gradient(low = "white", high = "red") +
       facet_wrap(~class)
+    }
   })
   
 data_second_pannel_table <- eventReactive(input$updatebutton2,ignoreNULL = F,ignoreInit = F,{
     mw <- manipulation2()
+    if(nrow(mw)==0){
+      mw
+    }else{
     mw3<- mw %>%
       slice_head(n = input$Gene_filter) %>%
       group_split()
@@ -420,7 +477,7 @@ data_second_pannel_table <- eventReactive(input$updatebutton2,ignoreNULL = F,ign
     mat1 <- subset(mat1, type %in% input$Types2)
     mat1 <- subset(mat1, class %in% input$Class2)
     mat1 <- mat1 %>%
-      filter(type != 'all')
+      filter(type != 'all')}
   })
 
 #############################################################################################################
@@ -475,9 +532,9 @@ manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F
   }
   datasets <- scna_data %>%
     na.omit() %>%
-    subset(Data %in% input$Resources3) %>% 
-    subset(Type %in% input$Types3) %>% #input$Types3
-    subset(Class %in% input$Class3) #input$Class3
+    filter(Data %in% input$Resources3) %>% 
+    filter(Type %in% input$Types3) %>% #input$Types3
+    filter(Class %in% input$Class3) #input$Class3
   
   if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
     datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
@@ -570,7 +627,16 @@ manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,igno
 plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
   
   br<- manipulation4() 
-  
+  if(nrow(br)==0){
+    df <- data.frame()
+    ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+      annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+      annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+      annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+      annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+      geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+      annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+  }else{
   ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
     ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
     geom_bar(stat = 'identity') +
@@ -582,7 +648,7 @@ plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#ev
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
     geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)
-  
+  } 
 })
 
 manipulation_cytoband2 <- reactive({
@@ -617,7 +683,16 @@ manipulation_cytoband <- reactive({
 plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
    
   gfrq <- manipulation_cytoband() 
-  
+  if(nrow(gfrq)==0){
+  df <- data.frame()
+  ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+    annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+    annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+    annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+    annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+    geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+    annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+}else{
   ggplot(gfrq %>%
            filter(data == 'all_brca') %>%
            arrange(start,end) %>% 
@@ -633,6 +708,7 @@ plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #e
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data = gfrq %>% filter(data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
+}
 })
 
 
@@ -660,7 +736,8 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 
       #plotting
     output$myplot <- renderPlot({
-            newData()
+                newData()
+
         })
     output$classplot <- renderPlot({
       newData2()
@@ -698,7 +775,7 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 #############################################################################################################
 ##################################### Per secondo pannello ###################################################
 
-       output$barplot <- renderPlot({
+    output$barplot <- renderPlot({
           data_second_pannel()
     })
 
