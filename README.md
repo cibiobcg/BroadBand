@@ -10,5 +10,5 @@ to show the genes most freqeuntly alterated and if there are specific genes for 
 
 Every pannel have the possibility to upload a single file that will bind tto the file alrady present in the application and thanks to that the widget that shows the resources will be automaticaly be updated with all the new resources of the new file generated, for seeing the updated plots and tabels the user need to press even in this case the button 'Apply' and then at the new file generated can undergoes the same analysis procedur. Any plots and tables presents in the application can be downloaded thanks to the special buttons presents in the application.
 
-For the 
+For a comeplete use of this app there is the need to donwload all the files and repository inside 
  
