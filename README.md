@@ -10,5 +10,5 @@ to show the genes most freqeuntly alterated and if there are specific genes for 
 
 Every pannel have the possibility to upload a single file that will bind diretcly the file already present in the application, the widget that shows the resources will be automaticaly be updated with all the new resources of the new file generated, for seeing the updated plots and tabels wit hthe new file the user need to press even in this case the button 'Apply' and then the new file can undergoes under the same analysis procedurs. Any plots and tables presents in the application can be downloaded thanks to the buttons presents in the application.
 
-For a comeplete use of this app there is the need to download the file 'app.R' and folders inside 'brcApp', which contain the files, the application code and the logo for this app. 
+For a comeplete use of this app there is the need to download the file 'app.R' and folders inside 'brcApp', which contain the files, the application code and the temporary logo for this app. 
  
