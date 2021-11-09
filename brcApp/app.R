@@ -355,10 +355,6 @@ newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
     {
       x<- file2
       x <- filter(x, data %in% input$Resources2 )
-      # resources <- c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')
-      # classes <- c('Primary','Metastasis')
-      # Types <- c('HER2+','HR+','TNBC')
-      # x <- filter(x,data %in% resources )
       m <- x %>% 
         group_by(Hugo_Symbol,class,type) %>% 
         summarise(max.freq=max(freq),w.mean=weighted.mean(x = freq,w = n.samples),median.freq = median(freq)) %>% 
@@ -401,13 +397,11 @@ newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
     
     data_pan_1 <- manipulation2()
     data_pan_1 <- filter(data_pan_1, class %in% input$Class2)
-    # data_pan_1 <- filter(data_pan_1, class %in% classes)
     data_pan_2 <- data_pan_1 %>% 
                   filter(type == 'all')
     data_pan_1 <- data_pan_1 %>% 
                   filter(type != 'all')
     data_pan_1 <- filter(data_pan_1, type %in% input$Types2)
-    # data_pan_1 <- filter(data_pan_1, type %in% Types)
     data_pan_3 <- data_pan_1 %>% 
                 rbind(data_pan_2)
     data_pan_3 <- data_pan_3 %>%
@@ -517,7 +511,7 @@ observe({
   resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
   updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
 
-manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
+manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
   if(is.null(input$otherfile3))
   {
     scna_data <- scna_data
@@ -533,14 +527,14 @@ manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F
   datasets <- scna_data %>%
     na.omit() %>%
     filter(Data %in% input$Resources3) %>% 
-    filter(Type %in% input$Types3) %>% #input$Types3
-    filter(Class %in% input$Class3) #input$Class3
+    filter(Type %in% input$Types3) %>%
+    filter(Class %in% input$Class3) 
   
-  if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
+  if(input$copynumber_granularity == TRUE){ 
     datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
     datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
     datasets$scna[datasets$scna == 0] <- 'neutral'
-  } else{ #input$copynumber_granularity
+  } else{
     datasets$scna[datasets$scna == -2] <- 'homodel'
     datasets$scna[datasets$scna == 2] <- 'ampl'
     datasets$scna[datasets$scna == 0] <- 'neutral'
@@ -593,7 +587,7 @@ manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F
   return(frq)
 })
 
-manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
+manipulation4 <-reactive({
   frq <- manipulation3()
   
   d <- frq %>%
@@ -608,7 +602,7 @@ manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,igno
   d$arm[grep(d$band,pattern =  'q')] <- 'q'
   
   br <-d %>% 
-    filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
+    filter(median.freq >= input$filter_median_freq) %>%
     add_column(max.name.goi = NA) 
   
   
@@ -624,7 +618,7 @@ manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,igno
   return(br)
 })
 
-plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
   
   br<- manipulation4() 
   if(nrow(br)==0){
@@ -638,12 +632,12 @@ plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#ev
       annotate("text", x=5, y=3, size=6, col="red", label="No Data")
   }else{
   ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
+    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   
     geom_bar(stat = 'identity') +
     facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
     scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 4)) +
-    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
+    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +   
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
@@ -680,7 +674,7 @@ manipulation_cytoband <- reactive({
   return(gfrq)
   
 })
-plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
+plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
    
   gfrq <- manipulation_cytoband() 
   if(nrow(gfrq)==0){
