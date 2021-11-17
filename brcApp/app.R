@@ -9,19 +9,18 @@ library(wesanderson)
 library(UpSetR)
 
 #loading files
-file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
-ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
-goi <- readLines('./Files_app/genes_of_interest.txt')
-load('./Files_app/scna_data.RData')
+file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+goi <- readLines('genes_of_interest.txt')
+load('scna_data.RData')
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                 theme = shinytheme('superhero'),
-                shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna  
-            
+                shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna   
     # Application title
     titlePanel(
-       div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA" )),
+       div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA")),
     # Sidebar with a slider input for number of bins 
     sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
         sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
@@ -130,60 +129,65 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
               style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))
         ),
         # Show a plot of the generated ditribution
-        mainPanel(
-              tabsetPanel(type= 'tabs', id = 'tabs',                           
-                tabPanel(id='main', value= 1, 
-                         'Count pannel',
-                      downloadButton(outputId = 'download_myplot',label = 'Download count plot'),
-                      downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
-                      downloadButton(outputId = 'download_classtable',label = 'Download table'),
-                  fluidRow( # fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
-                    column(6,plotOutput(outputId = 'myplot')),
-                    column(6,plotOutput(outputId = 'classplot' ))
-                    ),
-                  fluidRow(
-                    column(6,dataTableOutput(outputId = 'classtable'))
-                   )),
-                tabPanel(id ='sec', value = 2,
-                         'SNV pannel',
-                         downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
-                         downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
-                         downloadButton(outputId = 'download_table2',label = 'Download table'),
-                   fluidRow(
-                     column(6,plotOutput(outputId = 'barplot')),
-                     column(6,plotOutput(outputId = 'heatmap'))
-                   ),
-                   fluidRow(
-                     column(6,dataTableOutput(outputId = 'table2'))
-                   )),
-                tabPanel(id = 'thrd', value = 3,
-                         'CNA pannel',
-                         downloadButton(outputId = 'download_plots', label = 'downlaod chromosome plot'),
-                         downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
-                         downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
-                         downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
-                  fluidRow(style='height:80vh',
-                    column(12,plotOutput(outputId = 'plot',width = '125%'))
-                  ),
-                  fluidRow(
-                    column(12,plotOutput(outputId = 'cytoband', width = '125%'))
-                  ),
-                  fluidRow( 
-                    column(12,
-                           tabsetPanel(
-                             tabPanel('Chromosome',
-                                      fluidRow(
-                                        column(12,dataTableOutput(outputId = 'table_chromosome')))),
-                             tabPanel('Cytoband',
-                                      fluidRow(
-                                        column(12,dataTableOutput(outputId = 'table_cytoband'))))
-                          )
+    mainPanel(
+      tabsetPanel(type= 'tabs', id = 'tabs',                           
+                  tabPanel(id='main', value= 1, 
+                           'Overview',
+                           downloadButton(outputId = 'download_myplot',label = 'Download count plot'),
+                           downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
+                           downloadButton(outputId = 'download_classtable',label = 'Download table'),
+                           fluidRow( style='height:60vh',# fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
+                             column(6, plotOutput(outputId = 'myplot', height = '700px', )#, style = "height:400px; width:400 px"
+                                    ),
+                             column(6, plotOutput(outputId = 'classplot', height = '700px')
+                                    )
+                             # column(width = 6,
+                             #        fluidRow(plotOutput(outputId = 'myplot'), style = "heigth: 400px")),
+                             #        fluidRow( plotOutput(outputId = 'classplot'), style = "heigth: 400px")
+                           ),
+                           fluidRow(
+                             column(12,dataTableOutput(outputId = 'classtable'), style = "width:1550px")
+                           )),
+                  tabPanel(id ='sec', value = 2,
+                           'Somatic Single Nucleotide Variants (SNVs)',
+                           downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
+                           downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
+                           downloadButton(outputId = 'download_table2',label = 'Download table'),
+                           fluidRow(style='height:70vh',
+                             column(12,plotOutput(outputId = 'barplot', width = '125%', height = '820px'))),
+                           fluidRow(style='height:70vh',
+                             column(12,plotOutput(outputId = 'heatmap', width = '125%', height = '950px'))),
+                           fluidRow(
+                             column(12,dataTableOutput(outputId = 'table2'), style = "width:125%; font-size:125%")
+                           )),
+                  tabPanel(id = 'thrd', value = 3,
+                           'Somatic Copy Number Aberrations (SCNAs)',
+                           downloadButton(outputId = 'download_plots', label = 'downlaod chromosome plot'),
+                           downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
+                           downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
+                           downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
+                           fluidRow(style='height:70vh',
+                                    column(12,plotOutput(outputId = 'plot',width = '125%'))
+                           ),
+                           fluidRow(
+                             column(12,plotOutput(outputId = 'cytoband', width = '125%'))
+                           ),
+                           fluidRow( 
+                             column(12,
+                                    tabsetPanel(
+                                      tabPanel('Chromosome',
+                                               fluidRow(
+                                                 column(12,dataTableOutput(outputId = 'table_chromosome'), style = "width:125%; font-size:125%"))),
+                                      tabPanel('Cytoband',
+                                               fluidRow(
+                                                 column(12,dataTableOutput(outputId = 'table_cytoband'), style = "width:125%; font-size:125%")))
+                                    )
+                             )
+                           )
                   )
-                         )
-                )
-                         )
-                      )
-                    )
+      )
+    )
+    )
 )
 )
 
@@ -263,12 +267,13 @@ newData <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{ #eve
       annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
       annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
       geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-      annotate("text", x=5, y=3, size=6, col="red", label="No Data") 
+      annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
   }else{
   ggplot(data1, aes(x=type, y=n.samples, fill=class)) +
       geom_bar(stat="identity") + 
-        scale_fill_manual(values=c('#999999','#E69F00'))}
-    })
+      scale_fill_manual(values=c('#999999','#E69F00'))+
+      theme(text = element_text(size=18))}
+  })
 
 newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
     data2 <- manipulation1()
@@ -284,13 +289,15 @@ newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
         annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
         annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-        annotate("text", x=5, y=3, size=6, col="red", label="No Data") 
+        annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
     }else{
      ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
       geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
       scale_fill_manual(values=c('#999999','#E69F00')) +
-      geom_text(aes(label=n.samples)) + 
-      facet_wrap(~class)}
+      geom_text(aes(label=n.samples),size =5) + 
+      facet_wrap(~class)}+
+      theme(text = element_text(size=18))
+    
     })
   
   newData_table <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
@@ -417,17 +424,20 @@ newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
         annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
         annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-        annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+        annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
     for(i in 1:length(data_pan_3)){
       dn <- data_pan_3[[i]]
       dn$Hugo_Symbol <- factor(dn$Hugo_Symbol,levels = rev(dn$Hugo_Symbol))
       p<- ggplot(data=dn, aes(x=Hugo_Symbol, y=w.mean)) +
         geom_bar(stat="identity") + coord_flip() +
-        facet_wrap(type~class,scales = 'free')
+        facet_wrap(type~class,scales = 'free') +
+        theme(text = element_text(size=18))
+      
       plist[[i]] <- ggplotGrob(p)
     }
     grid.arrange(grobs=plist,ncol=4)
+    
   }
   })
   
@@ -441,7 +451,7 @@ data_second_pannel_heatmap <- eventReactive(input$updatebutton2,ignoreNULL = F,i
         annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
         annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-        annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+        annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
     mw2 <- mw %>%
           slice_head(n = input$Gene_filter) %>%
@@ -452,9 +462,10 @@ data_second_pannel_heatmap <- eventReactive(input$updatebutton2,ignoreNULL = F,i
 
     ggplot(mat, aes(type, Hugo_Symbol)) +
       geom_tile(aes(fill = w.mean)) + 
-      geom_text(aes(label = round(w.mean, 3)),size=2) +
+      geom_text(aes(label = round(w.mean, 3)),size=5) +
       scale_fill_gradient(low = "white", high = "red") +
-      facet_wrap(~class)
+      facet_wrap(~class) +
+      theme(text = element_text(size=18))
     }
   })
   
@@ -511,7 +522,7 @@ observe({
   resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
   updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
 
-manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
+manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
   if(is.null(input$otherfile3))
   {
     scna_data <- scna_data
@@ -527,14 +538,14 @@ manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F
   datasets <- scna_data %>%
     na.omit() %>%
     filter(Data %in% input$Resources3) %>% 
-    filter(Type %in% input$Types3) %>%
-    filter(Class %in% input$Class3) 
+    filter(Type %in% input$Types3) %>% #input$Types3
+    filter(Class %in% input$Class3) #input$Class3
   
-  if(input$copynumber_granularity == TRUE){ 
+  if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
     datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
     datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
     datasets$scna[datasets$scna == 0] <- 'neutral'
-  } else{
+  } else{ #input$copynumber_granularity
     datasets$scna[datasets$scna == -2] <- 'homodel'
     datasets$scna[datasets$scna == 2] <- 'ampl'
     datasets$scna[datasets$scna == 0] <- 'neutral'
@@ -587,7 +598,7 @@ manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F
   return(frq)
 })
 
-manipulation4 <-reactive({
+manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
   frq <- manipulation3()
   
   d <- frq %>%
@@ -602,7 +613,7 @@ manipulation4 <-reactive({
   d$arm[grep(d$band,pattern =  'q')] <- 'q'
   
   br <-d %>% 
-    filter(median.freq >= input$filter_median_freq) %>%
+    filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
     add_column(max.name.goi = NA) 
   
   
@@ -618,7 +629,7 @@ manipulation4 <-reactive({
   return(br)
 })
 
-plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
   
   br<- manipulation4() 
   if(nrow(br)==0){
@@ -629,19 +640,20 @@ plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
       annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
       annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
       geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-      annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+      annotate("text", x=5, y=3, size=10, col="red", label="No Data")
   }else{
   ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   
+    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
     geom_bar(stat = 'identity') +
     facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
     scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 4)) +
-    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +   
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 12)) +
+    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
-    geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)
+    geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)+
+    theme(text = element_text(size=18))
   } 
 })
 
@@ -674,7 +686,8 @@ manipulation_cytoband <- reactive({
   return(gfrq)
   
 })
-plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
+
+plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
    
   gfrq <- manipulation_cytoband() 
   if(nrow(gfrq)==0){
@@ -685,7 +698,7 @@ plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
     annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
     annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
     geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-    annotate("text", x=5, y=3, size=6, col="red", label="No Data")
+    annotate("text", x=5, y=3, size=10, col="red", label="No Data")
 }else{
   ggplot(gfrq %>%
            filter(data == 'all_brca') %>%
@@ -701,7 +714,8 @@ plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data = gfrq %>% filter(data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
-    scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))
+    scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))+
+    theme(text = element_text(size=13))
 }
 })
 
