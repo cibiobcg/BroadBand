@@ -119,8 +119,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                   label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
       selectInput(inputId ='Chromosomes',
                          label = 'Chromosomes',
-                         choices = c('All','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
-                  selected = 'All'),
+                         choices = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
+                  selected = '1'),
       selectInput(inputId = 'Cytoband',
                   label = 'Cytoband',
                   choices = c(''),
@@ -146,41 +146,46 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                              #        fluidRow( plotOutput(outputId = 'classplot'), style = "heigth: 400px")
                            ),
                            fluidRow(
-                             column(12,dataTableOutput(outputId = 'classtable'), style = "width:1550px")
+                             column(12,dataTableOutput(outputId = 'classtable'), style = 'width:100.5%')
                            )),
                   tabPanel(id ='sec', value = 2,
                            'Somatic Single Nucleotide Variants (SNVs)',
                            downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
                            downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
                            downloadButton(outputId = 'download_table2',label = 'Download table'),
-                           fluidRow(style='height:70vh',
+                           fluidRow(style='height:80vh',
                              column(12,plotOutput(outputId = 'barplot', width = '125%', height = '820px'))),
-                           fluidRow(style='height:70vh',
+                           fluidRow(style='height:80vh',
                              column(12,plotOutput(outputId = 'heatmap', width = '125%', height = '950px'))),
                            fluidRow(
-                             column(12,dataTableOutput(outputId = 'table2'), style = "width:125%; font-size:125%")
+                             column(12,dataTableOutput(outputId = 'table2'), style = 'width:125%')
                            )),
                   tabPanel(id = 'thrd', value = 3,
                            'Somatic Copy Number Aberrations (SCNAs)',
+                           downloadButton(outputId = 'download_plot_All', label = 'download all chromosomes plot'),
                            downloadButton(outputId = 'download_plots', label = 'downlaod chromosome plot'),
                            downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
                            downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
                            downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
-                           fluidRow(style='height:70vh',
-                                    column(12,plotOutput(outputId = 'plot',width = '125%'))
+                           fluidRow(style='height:80vh',
+                                    column(12,plotOutput(outputId = 'All_plot',width = '125%', height = '820px'))
+                           ),
+                           fluidRow(style='height:80vh',
+                                    column(12,plotOutput(outputId = 'plot',width = '125%', height = '820px'))
                            ),
                            fluidRow(
-                             column(12,plotOutput(outputId = 'cytoband', width = '125%'))
+                             column(12,plotOutput(outputId = 'cytoband', width = '125%', height = '820px'
+                                                  ))
                            ),
                            fluidRow( 
                              column(12,
                                     tabsetPanel(
                                       tabPanel('Chromosome',
                                                fluidRow(
-                                                 column(12,dataTableOutput(outputId = 'table_chromosome'), style = "width:125%; font-size:125%"))),
+                                                 column(12,dataTableOutput(outputId = 'table_chromosome'), style = "width:125%"))),
                                       tabPanel('Cytoband',
                                                fluidRow(
-                                                 column(12,dataTableOutput(outputId = 'table_cytoband'), style = "width:125%; font-size:125%")))
+                                                 column(12,dataTableOutput(outputId = 'table_cytoband'), style = "width:125%")))
                                     )
                              )
                            )
@@ -292,7 +297,7 @@ newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
         annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
     }else{
      ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
-      geom_bar(stat="identity") + theme(aspect.ratio = 1,legend.position = "none") +
+      geom_bar(stat="identity") + #theme(aspect.ratio = 1,legend.position = "none") +
       scale_fill_manual(values=c('#999999','#E69F00')) +
       geom_text(aes(label=n.samples),size =5) + 
       facet_wrap(~class)}+
@@ -616,6 +621,42 @@ manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,igno
     filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
     add_column(max.name.goi = NA) 
   
+  return(br)
+  
+
+})
+
+plotting2 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  
+  br<- manipulation4() 
+  if(nrow(br)==0){
+    df <- data.frame()
+    ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+      annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+      annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+      annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+      annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+      geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+      annotate("text", x=5, y=3, size=10, col="red", label="No Data")
+  }else{
+    ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
+      ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
+      geom_bar(stat = 'identity') +
+      facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
+      scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 4)) +
+      geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
+      scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
+      ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
+      geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
+      geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)+
+      theme(text = element_text(size=10))
+  } 
+})
+
+plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  
+  br<- manipulation4() 
   
   if(input$Chromosomes != 'All'){
     br <- br %>%
@@ -626,12 +667,6 @@ manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,igno
   
   br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
   
-  return(br)
-})
-
-plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
-  
-  br<- manipulation4() 
   if(nrow(br)==0){
     df <- data.frame()
     ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
@@ -645,21 +680,29 @@ plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#ev
   ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
     ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
     geom_bar(stat = 'identity') +
-    facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
     scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 12)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 15)) +
     geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
     geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)+
-    theme(text = element_text(size=18))
+    theme(text = element_text(size=25))
   } 
 })
 
 manipulation_cytoband2 <- reactive({
   
   br <- manipulation4()
+  
+  if(input$Chromosomes != 'All'){
+    br <- br %>%
+      filter(chr == input$Chromosomes)
+  }else{
+    br <- br
+  }
+  
+  br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
   
   bsel <- br %>%
     pull(band) %>%
@@ -687,7 +730,7 @@ manipulation_cytoband <- reactive({
   
 })
 
-plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
+plotting3 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
    
   gfrq <- manipulation_cytoband() 
   if(nrow(gfrq)==0){
@@ -711,17 +754,26 @@ plotting2 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #e
     facet_wrap(~band,scales = 'free_x') +
     scale_x_discrete(guide = guide_axis(n.dodge=2)) +
     scale_fill_manual('genes of interest',values = wes_palette("Royal1",n = 2)) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 18)) +
     ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
     geom_point(data = gfrq %>% filter(data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data)) +
     scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))+
-    theme(text = element_text(size=13))
+    theme(text = element_text(size=25))
 }
 })
 
 
 chromosome_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
   br <- manipulation4()
+  
+  if(input$Chromosomes != 'All'){
+    br <- br %>%
+      filter(chr == input$Chromosomes)
+  }else{
+    br <- br
+  }
+  
+  br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
   
   br <- br %>%
     filter(data == 'all_brca')
@@ -785,10 +837,10 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 
     output$barplot <- renderPlot({
           data_second_pannel()
-    })
+    }, height = 800)
 
     output$heatmap <- renderPlot({ data_second_pannel_heatmap()
-    })
+    }, height = 900)
     output$table2 <- renderDataTable(data_second_pannel_table())
 
     output$download_barplot<-  downloadHandler(
@@ -821,13 +873,17 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 #############################################################################################################
 ##################################### Per terzo pannello ###################################################
 
+    output$All_plot <- renderPlot({
+      plotting2()},
+      height = 800)
+    
     output$plot <-renderPlot({
       plotting()
       },height = 800
     )
     output$cytoband <- renderPlot({
-      plotting2()
-    })
+      plotting3()
+    }, height = 800)
 
     # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo
 
@@ -835,7 +891,16 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 
    output$table_cytoband <- renderDataTable({cytoband_table()})
 
-    output$download_plots<-  downloadHandler(
+   output$download_plot_All <- downloadHandler(
+     filename = function(){
+       paste('All_chromosomes_plot','.pdf',sep='')
+     },
+     content = function(file){
+       ggsave(file,plotting2())
+     }
+   )
+   
+   output$download_plots<-  downloadHandler(
       filename = function(){
         paste('Chromosome_plot','.pdf',sep = '')
       },
@@ -849,7 +914,7 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
       paste('Chromosome_plot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,plotting2())
+      ggsave(file,plotting3())
     }
     )
 
