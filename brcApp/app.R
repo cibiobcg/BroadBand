@@ -137,7 +137,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                            downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
                            downloadButton(outputId = 'download_classtable',label = 'Download table'),
                            fluidRow( style='height:60vh',# fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
-                             column(6, plotOutput(outputId = 'myplot', height = '700px', )#, style = "height:400px; width:400 px"
+                             column(6, plotOutput(outputId = 'myplot', height = '700px')#, style = "height:400px; width:400 px"
                                     ),
                              column(6, plotOutput(outputId = 'classplot', height = '700px')
                                     )
@@ -174,8 +174,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                     column(12,plotOutput(outputId = 'plot',width = '125%', height = '820px'))
                            ),
                            fluidRow(
-                             column(12,plotOutput(outputId = 'cytoband', width = '125%', height = '820px'
-                                                  ))
+                             column(12,plotOutput(outputId = 'cytoband', width = '125%', height = '820px'))
                            ),
                            fluidRow( 
                              column(12,
@@ -644,13 +643,10 @@ plotting2 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#e
       geom_bar(stat = 'identity') +
       facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
       scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 4)) +
-      geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
+      theme(axis.text.x = element_blank()) +
       scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
       ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
-      geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
-      geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)+
-      theme(text = element_text(size=10))
+      theme(text = element_text(size=25))
   } 
 })
 
@@ -677,17 +673,18 @@ plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#ev
       geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
       annotate("text", x=5, y=3, size=10, col="red", label="No Data")
   }else{
-  ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-    ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
-    geom_bar(stat = 'identity') +
-    scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 15)) +
-    geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=0.5) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
-    scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
-    ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
-    geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=0.5) +
-    geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=1,angle=90,hjust=0,nudge_y=0.01)+
-    theme(text = element_text(size=25))
+    ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
+      ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
+      geom_bar(stat = 'identity') +
+      facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
+      scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 16)) +
+      geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=3) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
+      scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
+      ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
+      geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=3) +
+      geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=10,angle=90,hjust=0,nudge_y=0.01)+
+      theme(text = element_text(size=25))
   } 
 })
 
@@ -941,5 +938,6 @@ cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = 
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
 
 
