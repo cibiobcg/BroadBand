@@ -15,25 +15,31 @@ ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,st
 goi <- readLines('./Files_app/genes_of_interest.txt')
 load('./Files_app/scna_data.RData')
 
-ui <- shinyUI(fluidPage(
+ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   theme = shinytheme('superhero'),
-  shinyjs::useShinyjs(), 
+  shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna   
+  # Application title
   titlePanel(
     div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA")),
-  sidebarLayout( position = 'left' ,
-                 sidebarPanel('Options', width = 2, 
-                              conditionalPanel( 
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
+                 sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
+                              conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
                                 condition = 'input.tabs== 1',
                                 fileInput(
                                   inputId = 'otherfile1',
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
+                                div(style = "margin-top: -22px ",
+                                actionButton("cancel1", "Cancel",icon("recycle"),#paper-plane
+                                             style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources1',
                                   label = 'Data resources',
                                   choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
+                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
                                 p('Available somatic data'),
                                 checkboxInput(
                                   inputId = 'ALL',
@@ -57,18 +63,21 @@ ui <- shinyUI(fluidPage(
                                   label = 'Tumor classification',
                                   choices = c('Primary','Metastasis'),
                                   selected = c('Primary','Metastasis')),
-                                actionButton("updatebutton1", "Apply",icon("dna"),
+                                actionButton("updatebutton1", "Apply",icon("dna"),#paper-plane
                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                 div(style="display:inline-block;width:32%;text-align: center;",
                                 actionButton('Reset1',"Reset",icon("trash-alt"),
                                              style = 'color: #fff; background-color: #BF0000; border-color:#BF0000'))),
-                              conditionalPanel( 
+                              conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
                                 condition = 'input.tabs== 2',
                                 fileInput(
                                   inputId = 'otherfile2',
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
+                                div(style = "margin-top: -22px ",
+                                    actionButton("cancel2", "Cancel",icon("recycle"),#paper-plane
+                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
                                 checkboxGroupInput(
                                   inputId = 'Resources2',  
                                   label = 'Data resources',
@@ -85,7 +94,7 @@ ui <- shinyUI(fluidPage(
                                   choices = c('Primary','Metastasis'),
                                   selected = c('Primary','Metastasis')),
                                 sliderInput(inputId = 'Gene_filter',label = 'Gene_filter', min = 5, max = 25, value = 25),
-                                actionButton("updatebutton2", "Apply",icon("dna"),
+                                actionButton("updatebutton2", "Apply",icon("dna"),#paper-plane
                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                 div(style="display:inline-block;width:32%;text-align: center;",
                                     actionButton('Reset2',"Reset",icon("trash-alt"),
@@ -97,6 +106,9 @@ ui <- shinyUI(fluidPage(
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
+                                div(style = "margin-top: -22px ",
+                                    actionButton("cancel3", "Cancel",icon("recycle"),#paper-plane3
+                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
                                 checkboxGroupInput(
                                   inputId = 'Resources3',
                                   label = 'Data resources',
@@ -115,13 +127,13 @@ ui <- shinyUI(fluidPage(
                                   selected = c('Primary','Metastasis')),
                                 radioButtons(inputId = 'copynumber_granularity',
                                              label = 'Copy number granularity',
-                                             choices = c('2 classes ' = TRUE, '4 classes' = FALSE),  
+                                             choices = c('2 classes ' = TRUE, '4 classes' = FALSE),  # vedere se va bene senza true e false , inoltre aggiunger e
                                              selected = TRUE),
                                 radioButtons(inputId = 'Groups3',
                                              label = 'Choose',choices =c('deletion' = 'homodel','amplification' = 'ampl'),selected = 'ampl'),
                                 sliderInput(inputId = 'filter_median_freq',
                                             label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
-                                selectInput(inputId ='Chromosomes', 
+                                selectInput(inputId ='Chromosomes',
                                             label = 'Chromosomes',
                                             choices = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
                                             selected = '1'),
@@ -129,7 +141,7 @@ ui <- shinyUI(fluidPage(
                                             label = 'Cytoband',
                                             choices = c(''),
                                             multiple = FALSE),   
-                                actionButton("updatebutton3", "Apply",icon("dna"),
+                                actionButton("updatebutton3", "Apply",icon("dna"),#paper-plane
                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                 div(style="display:inline-block;width:32%;text-align: center;",
                                     actionButton('Reset3',"Reset",icon("trash-alt"),
@@ -143,16 +155,19 @@ ui <- shinyUI(fluidPage(
                                         downloadButton(outputId = 'download_myplot',label = 'Download count plot'),
                                         downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
                                         downloadButton(outputId = 'download_classtable',label = 'Download table'),
-                                        fluidRow( style='height:60vh',
-                                                  column(6, plotOutput(outputId = 'myplot', height = '700px')
+                                        fluidRow( style='height:60vh',# fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
+                                                  column(6, plotOutput(outputId = 'myplot', height = '700px')#, style = "height:400px; width:400 px"
                                                   ),
                                                   column(6, plotOutput(outputId = 'classplot', height = '700px')
-                                                  )                                                
+                                                  )
+                                                  # column(width = 6,
+                                                  #        fluidRow(plotOutput(outputId = 'myplot'), style = "heigth: 400px")),
+                                                  #        fluidRow( plotOutput(outputId = 'classplot'), style = "heigth: 400px")
                                         ),
                                         fluidRow(
                                           column(12,dataTableOutput(outputId = 'classtable'), style = 'width:100.5%')
                                         )),
-                               tabPanel(id ='sec', value = 2, 
+                               tabPanel(id ='sec', value = 2,
                                         'Somatic Single Nucleotide Variants (SNVs)',
                                         downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
                                         downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
@@ -222,16 +237,19 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, 'Resources1', choices = risorse, selected = risorse)})
   
   observeEvent(input$Reset1,{
-    updateCheckboxGroupInput(session, 'Resources1', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("Resources1")
     shinyjs::reset("ALL")
     shinyjs::reset("CNA")
     shinyjs::reset("SNV")
     shinyjs::reset("Types1")
     shinyjs::reset("Class1")
-    shinyjs::reset("otherfile1") 
     })
-
+  
+  observeEvent(input$cancel1,{
+    updateCheckboxGroupInput(session, 'Resources1', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
+    shinyjs::reset("otherfile1") # non sembrano esserci rimasugli di file updated da test 
+  })
+  
   manipulation1 <-reactive({
     if(is.null(input$otherfile1))
     {
@@ -268,7 +286,7 @@ server <- function(input, output, session) {
     
   })
   
-  newData <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{ 
+  newData <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,
     data1 <- manipulation1()
     
     data1 <- data1%>%       
@@ -308,7 +326,7 @@ server <- function(input, output, session) {
         annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
     }else{
       ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
-        geom_bar(stat="identity") + 
+        geom_bar(stat="identity") + #theme(aspect.ratio = 1,legend.position = "none") +
         scale_fill_manual(values=c('#999999','#E69F00')) +
         geom_text(aes(label=n.samples),size =5) + 
         facet_wrap(~class)}+
@@ -374,13 +392,16 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, 'Resources2', choices = risorse, selected = risorse)})
   
   observeEvent(input$Reset2,{
-    updateCheckboxGroupInput(session, 'Resources2', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("Resources2")
     shinyjs::reset("Gene_filter")
     shinyjs::reset("Types2")
     shinyjs::reset("Class2")
-    shinyjs::reset("otherfile2") 
   })
+  
+  observeEvent(input$cancel2,{
+    updateCheckboxGroupInput(session, 'Resources2', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
+    shinyjs::reset("otherfile2") 
+    })
   
   manipulation2 <- reactive({
     if(is.null(input$otherfile2))
@@ -532,7 +553,6 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
   
   observeEvent(input$Reset3,{
-    updateCheckboxGroupInput(session, 'Resources3', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("Resources3")
     shinyjs::reset("Types3")
     shinyjs::reset("Class3")
@@ -541,10 +561,14 @@ server <- function(input, output, session) {
     shinyjs::reset("filter_median_freq")
     shinyjs::reset("Chromosomes")
     shinyjs::reset("Cytoband")
-    shinyjs::reset("otherfile3") 
   })
   
-  manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
+  observeEvent(input$cancel,{
+    updateCheckboxGroupInput(session, 'Resources3', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))
+    shinyjs::reset("otherfile3") 
+    })
+  
+  manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
     if(is.null(input$otherfile3))
     {
       scna_data <- scna_data
@@ -560,14 +584,14 @@ server <- function(input, output, session) {
     datasets <- scna_data %>%
       na.omit() %>%
       filter(Data %in% input$Resources3) %>% 
-      filter(Type %in% input$Types3) %>% 
-      filter(Class %in% input$Class3) 
+      filter(Type %in% input$Types3) %>% #input$Types3
+      filter(Class %in% input$Class3) #input$Class3
     
-    if(input$copynumber_granularity == TRUE){  
+    if(input$copynumber_granularity == TRUE){  #input$copynumber_granularity
       datasets$scna[datasets$scna %in% c(-1,-2)] <- 'homodel'
       datasets$scna[datasets$scna %in% c(1,2)] <- 'ampl'
       datasets$scna[datasets$scna == 0] <- 'neutral'
-    } else{ 
+    } else{ #input$copynumber_granularity
       datasets$scna[datasets$scna == -2] <- 'homodel'
       datasets$scna[datasets$scna == 2] <- 'ampl'
       datasets$scna[datasets$scna == 0] <- 'neutral'
@@ -620,7 +644,7 @@ server <- function(input, output, session) {
     return(frq)
   })
   
-  manipulation4 <-reactive({
+  manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
     frq <- manipulation3()
     
     d <- frq %>%
@@ -635,14 +659,14 @@ server <- function(input, output, session) {
     d$arm[grep(d$band,pattern =  'q')] <- 'q'
     
     br <-d %>% 
-      filter(median.freq >= input$filter_median_freq) %>%       
+      filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
       add_column(max.name.goi = NA) 
     
     return(br)
     
   })
   
-  plotting2 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  plotting2 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
     
     br<- manipulation4() 
     if(nrow(br)==0){
@@ -656,7 +680,7 @@ server <- function(input, output, session) {
         annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
       ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   
+        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
         geom_bar(stat = 'identity') +
         facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
         scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
@@ -667,7 +691,7 @@ server <- function(input, output, session) {
     } 
   })
   
-  plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
     
     br<- manipulation4() 
     
@@ -691,12 +715,12 @@ server <- function(input, output, session) {
         annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
       ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   
+        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
         geom_bar(stat = 'identity') +
         facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
         scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 16)) +
-        geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=6) +  
+        geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=6) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
         scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
         ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
         geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=6) +
@@ -744,7 +768,7 @@ server <- function(input, output, session) {
     
   })
   
-  plotting3 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ 
+  plotting3 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
     
     gfrq <- manipulation_cytoband() 
     if(nrow(gfrq)==0){
@@ -898,7 +922,9 @@ server <- function(input, output, session) {
   output$cytoband <- renderPlot({
     plotting3()
   }, height = 800)
-    
+  
+  # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo
+  
   output$table_chromosome <- renderDataTable({chromosome_table()})
   
   output$table_cytoband <- renderDataTable({cytoband_table()})
@@ -953,7 +979,6 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
 
 
 
