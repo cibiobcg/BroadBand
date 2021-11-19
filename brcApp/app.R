@@ -563,7 +563,7 @@ server <- function(input, output, session) {
     shinyjs::reset("Cytoband")
   })
   
-  observeEvent(input$cancel,{
+  observeEvent(input$cancel3,{
     updateCheckboxGroupInput(session, 'Resources3', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("otherfile3") 
     })
