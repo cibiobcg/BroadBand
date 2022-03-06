@@ -9,11 +9,12 @@ library(wesanderson)
 library(UpSetR)
 
 #loading files
-file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
-ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
-goi <- readLines('./Files_app/genes_of_interest.txt')
-load('./Files_app/scna_data.RData')
+file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+goi <- readLines('genes_of_interest.txt')
+load('scna_data.RData')
+
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   theme = shinytheme('superhero'),
@@ -78,11 +79,12 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 div(style = "margin-top: -22px ",
                                     actionButton("cancel2", "Cancel",icon("recycle"),#paper-plane
                                                  style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources2',  
                                   label = 'Data resources',
                                   choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018')),
+                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
                                 checkboxGroupInput(
                                   inputId = 'Types2',
                                   label = 'Breast cancer subtypes',
@@ -109,12 +111,12 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 div(style = "margin-top: -22px ",
                                     actionButton("cancel3", "Cancel",icon("recycle"),#paper-plane3
                                                  style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources3',
                                   label = 'Data resources',
                                   choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018')
-                                ),
+                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))),
                                 checkboxGroupInput(
                                   inputId = 'Types3',
                                   label = 'Breast cancer subtypes',
@@ -552,16 +554,6 @@ server <- function(input, output, session) {
     resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
     updateCheckboxGroupInput(session, 'Resources3', choices = resources, selected = resources)})
   
-  observeEvent(input$Reset3,{
-    shinyjs::reset("Resources3")
-    shinyjs::reset("Types3")
-    shinyjs::reset("Class3")
-    shinyjs::reset("copynumber_granularity")
-    shinyjs::reset("Groups3")
-    shinyjs::reset("filter_median_freq")
-    shinyjs::reset("Chromosomes")
-    shinyjs::reset("Cytoband")
-  })
   
   observeEvent(input$cancel3,{
     updateCheckboxGroupInput(session, 'Resources3', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))
@@ -750,6 +742,7 @@ server <- function(input, output, session) {
     return(bsel)
   })
   
+  
   observe({
     updateSelectInput(session, 'Cytoband', choices = manipulation_cytoband2())
   })
@@ -781,7 +774,7 @@ server <- function(input, output, session) {
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
         annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
-      ggplot(gfrq %>%
+    ggplot(gfrq %>%
                filter(data == 'all_brca') %>%
                arrange(start,end) %>% 
                distinct(Hugo_Symbol, .keep_all = TRUE) %>%
@@ -829,6 +822,8 @@ server <- function(input, output, session) {
       mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
     
   })
+  
+  
   ############################################################################################################
   ##################################### Per primo pannello ###################################################
   
@@ -846,18 +841,19 @@ server <- function(input, output, session) {
   
   #PER DOWNLOAD
   output$download_myplot <- downloadHandler(
-    filename = function(){'Count_plot.png'},
+    filename = function(){
+      paste('Count_plot','.pdf',sep = '')},
     content = function(file){
-      ggsave(file,newData())
+      ggsave(file,newData(), width = 20, height = 20)
     }
   )
   
   output$download_classplot <- downloadHandler(
     filename = function(){
-      paste('Metastis_primary_plot.png')
+      paste('Metastis_primary_plot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,newData2())
+      ggsave(file,newData2(), width = 20,height = 20)
     }
   )
   
@@ -866,7 +862,7 @@ server <- function(input, output, session) {
       paste('Count_table','.csv',sep = '')
     },
     content = function(file){
-      write.csv(newData_table(),file)
+      write.csv(newData_table(),file, row.names = FALSE, col.names = T, sep = ',')
     }
   )
   
@@ -886,7 +882,7 @@ server <- function(input, output, session) {
       paste('SNV_barplot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,data_second_pannel())
+      ggsave(file,data_second_pannel(), width = 30, height = 30)
       
     }
   )
@@ -896,7 +892,7 @@ server <- function(input, output, session) {
       paste('SNV_heatmap','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,data_second_pannel_heatmap())
+      ggsave(file,data_second_pannel_heatmap(), width = 30, height = 30)
     }
   )
   
@@ -905,7 +901,7 @@ server <- function(input, output, session) {
       paste('SNV_table','.csv',sep = '')
     },
     content = function(file){
-      write.csv(data_second_pannel_table(),file)
+      write.csv(data_second_pannel_table(),file, row.names = FALSE, col.names = T, sep = ',')
     }
   )
   #############################################################################################################
@@ -923,8 +919,6 @@ server <- function(input, output, session) {
     plotting3()
   }, height = 800)
   
-  # problema codice riguardo tabelle e blocca anche pollting2 in qualche modo
-  
   output$table_chromosome <- renderDataTable({chromosome_table()})
   
   output$table_cytoband <- renderDataTable({cytoband_table()})
@@ -934,7 +928,7 @@ server <- function(input, output, session) {
       paste('All_chromosomes_plot','.pdf',sep='')
     },
     content = function(file){
-      ggsave(file,plotting2())
+      ggsave(file,plotting2(), width = 30, height = 30)
     }
   )
   
@@ -943,16 +937,16 @@ server <- function(input, output, session) {
       paste('Chromosome_plot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,plotting())
+      ggsave(file,plotting(), width = 30, height = 30)
     }
   )
   
   output$download_cytoband<-  downloadHandler(
     filename = function(){
-      paste('Chromosome_plot','.pdf',sep = '')
+      paste('Cytoband_plot','.pdf',sep = '')
     },
     content = function(file){
-      ggsave(file,plotting3())
+      ggsave(file,plotting3(),width = 30,height = 30)
     }
   )
   
@@ -961,7 +955,7 @@ server <- function(input, output, session) {
       paste('CNA_table_chromosome','.csv',sep = '')
     },
     content = function(file){
-      write.csv(chromosome_table(),file)
+      write.csv(chromosome_table(),file, row.names = FALSE, col.names = T, sep = ',')
     }
   )
   
@@ -970,7 +964,7 @@ server <- function(input, output, session) {
       paste('CNA_table_cytoband','.csv',sep = '')
     },
     content = function(file){
-      write.csv(cytoband_table(),file)
+      write.csv(cytoband_table(),file, row.names = FALSE, col.names = T, sep = ',')
     }
   )
   
