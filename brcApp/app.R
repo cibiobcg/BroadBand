@@ -20,6 +20,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   theme = shinytheme('superhero'),
   shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna   
   # Application title
+  tags$head(HTML("<title>BroadBand</title>")),
   titlePanel(
     div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA")),
   # Sidebar with a slider input for number of bins 
