@@ -22,7 +22,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   # Application title
   tags$head(HTML("<title>BroadBand</title>")),
   titlePanel(
-    div(img(height = 100, width = 100, src='logo_app.jpg',style = 'border-radius: 20%'),"BRCA")),
+    div(img(height = 150, width = 250, src='logo_app.jpg',style = 'border-radius: 20%'),"BroadBand")),
   # Sidebar with a slider input for number of bins 
   sidebarLayout( position = 'left' ,# posso indicare al posizone dove mettere la sidebar
                  sidebarPanel('Options', width = 2, # posso anche mettere un sottotitolo nella sidebar
