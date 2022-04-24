@@ -9,18 +9,17 @@ library(wesanderson)
 library(UpSetR)
 
 #loading files
-file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
-ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
-goi <- readLines('./Files_app/genes_of_interest.txt')
-load('./Files_app/scna_data.RData')
+file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+goi <- readLines('genes_of_interest.txt')
+load('scna_data.RData')
 
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   theme = shinytheme('superhero'),
   shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna   
   # Application title
-  tags$head(HTML("<title>BroadBand</title>")),
   titlePanel(
     div(img(height = 150, width = 250, src='logo_app.jpg',style = 'border-radius: 20%'),"BroadBand")),
   # Sidebar with a slider input for number of bins 
@@ -33,33 +32,37 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
-                                div(style = "margin-top: -22px ",
-                                actionButton("cancel1", "Cancel",icon("recycle"),#paper-plane
-                                             style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                div(style = "margin-top:-550px;display:inline-block ",
+                                  actionButton("cancel1", "Cancel",icon("recycle"),#paper-plane
+                                             style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
+                                  actionButton('info1','',icon('question'))),
                                 div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources1',
                                   label = 'Data resources',
                                   choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
                                   selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
-                                p('Available somatic data'),
+                                h6('Available somatic data'),
+                                div(style = "margin-top: -5px ",
                                 checkboxInput(
                                   inputId = 'ALL',
                                   label = 'all',
-                                  value = TRUE),
+                                  value = TRUE)),
+                                div(style = "margin-top: -10px ",
                                 checkboxInput(
                                   inputId = 'CNA',
                                   label = 'Somatic copy number alterations',
-                                  value = FALSE),
+                                  value = FALSE)),
+                                div(style = "margin-top: -10px ",
                                 checkboxInput(
                                   inputId = 'SNV',
                                   label = 'Somatic single nucleotide variants',
-                                  value = FALSE),
+                                  value = FALSE)),
                                 checkboxGroupInput(
                                   inputId = 'Types1',
                                   label = 'Breast cancer subtypes',
-                                  choices = c('HER2+','HR+','TNBC'),
-                                  selected = c('HER2+','HR+','TNBC')),
+                                  choices = c('HR+','HER2+','TNBC'),
+                                  selected = c('HR+','HER2+','TNBC')),
                                 checkboxGroupInput(
                                   inputId = 'Class1',
                                   label = 'Tumor classification',
@@ -77,9 +80,10 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
-                                div(style = "margin-top: -22px ",
+                                div(style = "margin-top:-550px;display:inline-block ",
                                     actionButton("cancel2", "Cancel",icon("recycle"),#paper-plane
-                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
+                                actionButton('info2','',icon('question'))),
                                 div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources2',  
@@ -89,8 +93,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 checkboxGroupInput(
                                   inputId = 'Types2',
                                   label = 'Breast cancer subtypes',
-                                  choices = c('HER2+','HR+','TNBC'),
-                                  selected = c('HER2+','HR+','TNBC')),
+                                  choices = c('HR+','HER2+','TNBC'),
+                                  selected = c('HR+','HER2+','TNBC')),
                                 checkboxGroupInput(
                                   inputId = 'Class2',
                                   label = 'Tumor classification',
@@ -109,9 +113,10 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                   label = 'choose tsv file',
                                   multiple = TRUE,
                                   accept = '.tsv'),
-                                div(style = "margin-top: -22px ",
+                                div(style = "margin-top:-550px;display:inline-block ",
                                     actionButton("cancel3", "Cancel",icon("recycle"),#paper-plane3
-                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%")),
+                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
+                                    actionButton('info3','',icon('question'))),
                                 div(style = 'margin-top: 20px',
                                 checkboxGroupInput(
                                   inputId = 'Resources3',
@@ -121,8 +126,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 checkboxGroupInput(
                                   inputId = 'Types3',
                                   label = 'Breast cancer subtypes',
-                                  choices = c('HER2+','HR+','TNBC'),
-                                  selected = c('HER2+','HR+','TNBC')),
+                                  choices = c('HR+','HER2+','TNBC'),
+                                  selected = c('HR+','HER2+','TNBC')),
                                 checkboxGroupInput(
                                   inputId = 'Class3',
                                   label = 'Tumor classification',
@@ -158,6 +163,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                         downloadButton(outputId = 'download_myplot',label = 'Download count plot'),
                                         downloadButton(outputId = 'download_classplot',label = 'Download primary-metastasis plot'),
                                         downloadButton(outputId = 'download_classtable',label = 'Download table'),
+                                        tableOutput(outputId = 'out_data_1'),
+                                        bsModal(id= 'information1', title = 'INFORMATION ABOUT FILES UPLOAD', trigger = 'info1', size = 'medium',textOutput('textinfo1')),
                                         fluidRow( style='height:60vh',# fluidrow serve come comnado per mettere dove vooglio i vari plot all'interno degli output
                                                   column(6, plotOutput(outputId = 'myplot', height = '700px')#, style = "height:400px; width:400 px"
                                                   ),
@@ -175,10 +182,14 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                         downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
                                         downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
                                         downloadButton(outputId = 'download_table2',label = 'Download table'),
+                                        tableOutput(outputId = 'out_data_2'),
+                                        bsModal(id= 'information2', title = 'INFORMATION ABOUT FILES UPLOAD', trigger = 'info2', size = 'medium',textOutput('textinfo2')),
                                         fluidRow(style='height:80vh',
                                                  column(12,plotOutput(outputId = 'barplot', width = '125%', height = '820px'))),
                                         fluidRow(style='height:80vh',
                                                  column(12,plotOutput(outputId = 'heatmap', width = '125%', height = '950px'))),
+                                        fluidRow(style='height:80vh',
+                                                 column(12,plotOutput(outputId = 'barplot_heat', width = '125%', height = '1000px'))),
                                         fluidRow(
                                           column(12,dataTableOutput(outputId = 'table2'), style = 'width:125%')
                                         )),
@@ -189,6 +200,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                         downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
                                         downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
                                         downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
+                                        tableOutput(outputId = 'out_data_3'),
+                                        bsModal(id= 'information3', title = 'INFORMATION ABOUT FILES UPLOAD', trigger = 'info3', size = 'medium',textOutput('textinfo3')),
                                         fluidRow(style='height:80vh',
                                                  column(12,plotOutput(outputId = 'All_plot',width = '125%', height = '820px'))
                                         ),
@@ -218,20 +231,28 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
 )
 
 server <- function(input, output, session) {
+  options(shiny.maxRequestSize=30*1024^2) 
   
   #############################################################################################################
   ##################################### Per primo pannello ###################################################
  observe({
-    if(is.null(input$otherfile1))
-    {
-      file <- file
-    }
-    else
-    {
-      uploaded <- input$otherfile1
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
-      file <- file %>%
-        rbind(uploaded2)    }
+   inFile <- input$otherfile1
+   if(is.null(inFile)){
+     file <- file  
+     
+   } else{
+     numfiles = nrow(inFile)                
+     kata = list()
+     
+     for(i in 1:numfiles){
+       files = read.delim(input$otherfile1[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+       kata[[i]] = files
+     }
+     finals <- do.call(rbind,kata)
+     file <- file %>% 
+       rbind(finals)
+     
+   }
     
     rawdata <- file %>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -254,17 +275,22 @@ server <- function(input, output, session) {
   })
   
   manipulation1 <-reactive({
-    if(is.null(input$otherfile1))
-    {
-      x1 <- file
+    inFile1 <- input$otherfile1
+    if(is.null(inFile1)){
+      x1 <- file  
+      
+    } else{
+      numfiles = nrow(inFile1)                
+      kata2 = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile1[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata2[[i]] = files
+      }
+      finals <- do.call(rbind,kata2)
+      x1 <- file %>% 
+        rbind(finals)
     }
-    else
-    {
-      x1<- file
-      uploaded <- input$otherfile1
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
-      x1 <- x1 %>%
-        rbind(uploaded2)  }
     
     if(input$ALL == TRUE){
       x1 <- x1 %>%
@@ -306,10 +332,13 @@ server <- function(input, output, session) {
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
         annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
     }else{
-      ggplot(data1, aes(x=type, y=n.samples, fill=class)) +
+      ggplot(data1, aes(x=factor(type, levels = c('HR+','HER2+','TNBC')), y=n.samples, fill=factor(class, levels = c('Primary','Metastasis')))) +
         geom_bar(stat="identity") + 
         scale_fill_manual(values=c('#999999','#E69F00'))+
-        theme(text = element_text(size=18))}
+        theme(text = element_text(size=18))+ 
+        xlab('Type')+
+        labs(fill = 'Classes')
+      }
   })
   
   newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
@@ -328,12 +357,14 @@ server <- function(input, output, session) {
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
         annotate("text", x=5, y=3, size=10, col="red", label="No Data") 
     }else{
-      ggplot(data2, aes(x=type,y=n.samples,fill=class)) +
+      ggplot(data2, aes(x=factor(type, levels = c('HR+','HER2+','TNBC')), y=n.samples,fill=factor(class, levels = c('Primary','Metastasis')))) +
         geom_bar(stat="identity") + #theme(aspect.ratio = 1,legend.position = "none") +
         scale_fill_manual(values=c('#999999','#E69F00')) +
         geom_text(aes(label=n.samples),size =5) + 
-        facet_wrap(~class)}+
-      theme(text = element_text(size=18))
+        facet_wrap(~factor(class,levels = c('Primary','Metastasis')))+
+      theme(text = element_text(size=18))+
+      xlab('Type')+
+      labs(fill = 'Classes')}
     
   })
   
@@ -352,6 +383,10 @@ server <- function(input, output, session) {
       rename(n.samples =n.samples_sum, n.patients = n.patients_sum)
     data3 <- data3 %>%
       rbind(all2)
+  })
+  
+  information_1 <- eventReactive(input$info1,{
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
   })
   ############### gestione combinazione tasti ALL - SNV - CNA #####################
   observeEvent(input$ALL,{
@@ -377,18 +412,24 @@ server <- function(input, output, session) {
   
   #############################################################################################################
   ##################################### Per secondo pannello ###################################################  
+  
   observe({
-    if(is.null(input$otherfile2))
-    {
-      x <- file2
+  inFile2 <- input$otherfile2
+  if(is.null(inFile2)){
+    x <- file2
+    
+  } else{
+    numfiles = nrow(inFile2)                
+    kata = list()
+    
+    for(i in 1:numfiles){
+      files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+      kata[[i]] = files
     }
-    else
-    {
-      uploaded <- input$otherfile2
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE)
-      x <- file2 %>%
-        rbind(uploaded2)
-    }
+    finals <- do.call(rbind,kata)
+    x <- file2 %>% 
+      rbind(finals)
+  }
     rawdatasecpan <- x %>%       
       group_by(data)
     risorse <- rawdatasecpan$data[!duplicated(rawdatasecpan$data)]
@@ -407,19 +448,25 @@ server <- function(input, output, session) {
     })
   
   manipulation2 <- reactive({
-    if(is.null(input$otherfile2))
-    {
-      x<- file2
-    }
-    else
-    {
-      uploaded3<- input$otherfile2
-      uploaded4 <- read.delim(file = uploaded3$datapath, header = TRUE, stringsAsFactors = FALSE)
+    inFile2 <- input$otherfile2
+    if(is.null(inFile2)){
+      x <- file2
+      
+    } else{
+      numfiles = nrow(inFile2)                
+      kata = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata[[i]] = files
+      }
+      finals <- do.call(rbind,kata)
       x <- file2 %>% 
-           rbind(uploaded4)  
+        rbind(finals)
+      
     }
     
-    x <- filter(x, data %in% input$Resources2)  
+    x <- filter(x, data %in% input$Resources2)  #input$Resources2
     m <- x %>% 
         group_by(Hugo_Symbol,class,type) %>% 
         summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
@@ -493,12 +540,48 @@ server <- function(input, output, session) {
       mat <- filter(mat, type %in% input$Types2)
       mat <- filter(mat, class %in% input$Class2)
       
-      ggplot(mat, aes(type, Hugo_Symbol)) +
+      ggplot(mat, aes(factor(type, levels = c('HR+','HER2+','TNBC')), Hugo_Symbol)) +
         geom_tile(aes(fill = w.mean)) + 
         geom_text(aes(label = round(w.mean, 3)),size=5) +
         scale_fill_gradient(low = "white", high = "red") +
-        facet_wrap(~class) +
-        theme(text = element_text(size=18))
+        facet_wrap(~factor(class,levels = c('Primary','Metastasis'))) +
+        theme(text = element_text(size=18))+
+        xlab('Type')+
+        theme(panel.background = element_rect(fill = '#599ad3')) #'#003f5c'
+    }
+  })
+  
+  
+  data_barplot_heat <- eventReactive(input$updatebutton2, ignoreNULL= F, ignoreInit = F, {
+    
+    mw <- manipulation2()
+    
+    if(nrow(mw) == 0 ){
+      df <- data.frame()
+      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
+        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
+        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
+        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
+        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
+        annotate("text", x=5, y=3, size=10, col="red", label="No Data")
+    }else{
+      
+      mw2 <- mw %>%
+        slice_head(n = input$Gene_filter ) %>% #input$Gene_filter
+        group_split()
+      mat <- do.call(rbind,mw2)    
+      mat <- filter(mat, type %in% input$Types2)
+      mat <- filter(mat, class %in% input$Class2)
+      mat <- mat %>% 
+            arrange(desc(Hugo_Symbol))
+      
+      ggplot(data=mat, aes(x=Hugo_Symbol, y=w.mean, fill= factor(class, levels = c('Primary','Metastasis')))) +
+        geom_bar(stat="identity", position = 'dodge') + coord_flip() +
+        scale_fill_manual(values=c('#599ad3','#f9a65a')) +   #999999 #E69F00
+        facet_wrap(~factor(type,levels = c('HR+','HER2+','TNBC')))+
+        theme(text = element_text(size=18))+
+        labs(fill = 'Classes')
     }
   })
   
@@ -516,6 +599,10 @@ server <- function(input, output, session) {
       mat1 <- subset(mat1, class %in% input$Class2)
       mat1 <- mat1 %>%
         filter(type != 'all')}
+  })
+  
+  information_2 <- eventReactive(input$info2,{
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
   })
   
   #############################################################################################################
@@ -538,18 +625,24 @@ server <- function(input, output, session) {
     arrange(n)
   
   observe({
-    if(is.null(input$otherfile3))
-    {
+    inFile3 <- input$otherfile3
+    if(is.null(inFile3)){
+      
       scna_data <- scna_data
+      
+    }else{
+      numfiles = nrow(inFile2)                
+      kata = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata[[i]] = files
+      }
+      finals <- do.call(rbind,kata)
+      scna_data <- scna_data %>% 
+                   rbind(finals)
     }
-    else
-    {
-      scna_data<- scna_data
-      uploaded <- input$otherfile3
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
-      scna_data <- scna_data %>%
-        rbind(uploaded2)  
-    }
+    
     rawdataterzpan <- scna_data %>%       
       group_by(Data)
     resources <- rawdataterzpan$Data[!duplicated(rawdataterzpan$Data)]
@@ -562,18 +655,24 @@ server <- function(input, output, session) {
     })
   
   manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
-    if(is.null(input$otherfile3))
-    {
+    inFile3 <- input$otherfile3
+    if(is.null(inFile3)){
+      
       scna_data <- scna_data
+      
+    }else{
+      numfiles = nrow(inFile2)                
+      kata = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata[[i]] = files
+      }
+      finals <- do.call(rbind,kata)
+      scna_data <- scna_data %>% 
+        rbind(finals)
     }
-    else
-    {
-      scna_data<- scna_data
-      uploaded <- input$otherfile3
-      uploaded2 <- read.delim(file = uploaded$datapath, header = TRUE, stringsAsFactors = FALSE) 
-      scna_data <- scna_data %>%
-        rbind(uploaded2)  
-    }
+    
     datasets <- scna_data %>%
       na.omit() %>%
       filter(Data %in% input$Resources3) %>% 
@@ -655,6 +754,8 @@ server <- function(input, output, session) {
       filter(median.freq >= input$filter_median_freq) %>%       #input$filter_median_freq
       add_column(max.name.goi = NA) 
     
+    br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
+    
     return(br)
     
   })
@@ -672,7 +773,8 @@ server <- function(input, output, session) {
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
         annotate("text", x=5, y=3, size=10, col="red", label="No Data")
     }else{
-      ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
+      ggplot(br%>% filter(data == 'all_brca')
+             ,aes(x=band,y=median.freq,fill=arm)) +
         ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
         geom_bar(stat = 'identity') +
         facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
@@ -687,16 +789,10 @@ server <- function(input, output, session) {
   plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
     
     br<- manipulation4() 
-    
-    if(input$Chromosomes != 'All'){
-      br <- br %>%
+  
+    br <- br %>%
         filter(chr == input$Chromosomes)
-    }else{
-      br <- br
-    }
-    
-    br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-    
+
     if(nrow(br)==0){
       df <- data.frame()
       ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
@@ -824,9 +920,15 @@ server <- function(input, output, session) {
     
   })
   
+  information_3 <- eventReactive(input$info3,{
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
+  })
   
   ############################################################################################################
   ##################################### Per primo pannello ###################################################
+  output$textinfo1 <- renderText({
+    information_1()
+  })
   
   #plotting
   output$myplot <- renderPlot({
@@ -869,6 +971,9 @@ server <- function(input, output, session) {
   
   #############################################################################################################
   ##################################### Per secondo pannello ###################################################
+  output$textinfo2 <- renderText({
+    information_2()
+  })
   
   output$barplot <- renderPlot({
     data_second_pannel()
@@ -877,6 +982,10 @@ server <- function(input, output, session) {
   output$heatmap <- renderPlot({ data_second_pannel_heatmap()
   }, height = 900)
   output$table2 <- renderDataTable(data_second_pannel_table())
+  
+  output$barplot_heat <- renderPlot({
+    data_barplot_heat()
+  }, height = 1000)
   
   output$download_barplot<-  downloadHandler(
     filename = function(){
@@ -907,6 +1016,9 @@ server <- function(input, output, session) {
   )
   #############################################################################################################
   ##################################### Per terzo pannello ###################################################
+  output$textinfo3 <- renderText({
+    information_3()
+  })
   
   output$All_plot <- renderPlot({
     plotting2()},
