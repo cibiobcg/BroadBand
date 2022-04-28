@@ -6,6 +6,7 @@ library(gridExtra)
 library(data.table)
 library(parallel)
 library(wesanderson)
+library(shinyBS)
 library(UpSetR)
 
 #loading files
@@ -171,11 +172,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                                   column(6, plotOutput(outputId = 'myplot', height = '700px')#, style = "height:400px; width:400 px"
                                                   ),
                                                   column(6, plotOutput(outputId = 'classplot', height = '700px')
-                                                  )
-                                                  # column(width = 6,
-                                                  #        fluidRow(plotOutput(outputId = 'myplot'), style = "heigth: 400px")),
-                                                  #        fluidRow( plotOutput(outputId = 'classplot'), style = "heigth: 400px")
-                                        ),
+                                                  )),
                                         fluidRow(
                                           column(12,dataTableOutput(outputId = 'classtable'), style = 'width:100.5%')
                                         )),
@@ -388,7 +385,7 @@ server <- function(input, output, session) {
   })
   
   information_1 <- eventReactive(input$info1,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   ############### gestione combinazione tasti ALL - SNV - CNA #####################
   observeEvent(input$ALL,{
@@ -604,7 +601,7 @@ server <- function(input, output, session) {
   })
   
   information_2 <- eventReactive(input$info2,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   
   #############################################################################################################
@@ -637,7 +634,7 @@ server <- function(input, output, session) {
       kata = list()
       
       for(i in 1:numfiles){
-        files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        files = read.delim(input$otherfile3[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
         kata[[i]] = files
       }
       finals <- do.call(rbind,kata)
@@ -923,7 +920,7 @@ server <- function(input, output, session) {
   })
   
   information_3 <- eventReactive(input$info3,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files it is need to be done simultaneously')
+    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   
   ############################################################################################################
@@ -935,14 +932,14 @@ server <- function(input, output, session) {
   #plotting
   output$myplot <- renderPlot({
     newData()
-    
-  })
+      })
+  
   output$classplot <- renderPlot({
     newData2()
   })
   
   #DataTable
-  output$classtable <- renderDataTable(newData_table())
+  output$classtable <- renderDataTable({newData_table()})
   
   #PER DOWNLOAD
   output$download_myplot <- downloadHandler(
@@ -983,11 +980,12 @@ server <- function(input, output, session) {
   
   output$heatmap <- renderPlot({ data_second_pannel_heatmap()
   }, height = 900)
-  output$table2 <- renderDataTable(data_second_pannel_table())
   
   output$barplot_heat <- renderPlot({
     data_barplot_heat()
   }, height = 1000)
+  
+  output$table2 <- renderDataTable({data_second_pannel_table()})
   
   output$download_barplot<-  downloadHandler(
     filename = function(){
@@ -1088,5 +1086,6 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
 
 
