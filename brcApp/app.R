@@ -7,6 +7,7 @@ library(data.table)
 library(parallel)
 library(wesanderson)
 library(UpSetR)
+library(shinyBS)
 
 #loading files
 
