@@ -9,17 +9,19 @@ library(wesanderson)
 library(UpSetR)
 
 #loading files
-file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
-ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
-goi <- readLines('genes_of_interest.txt')
-load('scna_data.RData')
+
+file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+goi <- readLines('./Files_app/genes_of_interest.txt')
+load('./Files_app/scna_data.RData')
 
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
   theme = shinytheme('superhero'),
   shinyjs::useShinyjs(), # questo mi serve per 'controllare' i vari click per gli input riguradanti snv e cna   
   # Application title
+  tags$head(HTML("<title>BroadBand</title>")),
   titlePanel(
     div(img(height = 150, width = 250, src='logo_app.jpg',style = 'border-radius: 20%'),"BroadBand")),
   # Sidebar with a slider input for number of bins 
@@ -1086,6 +1088,5 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
 
 
