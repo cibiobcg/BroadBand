@@ -633,7 +633,7 @@ server <- function(input, output, session) {
       scna_data <- scna_data
       
     }else{
-      numfiles = nrow(inFile2)                
+      numfiles = nrow(inFile3)                
       kata = list()
       
       for(i in 1:numfiles){
