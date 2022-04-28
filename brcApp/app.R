@@ -8,6 +8,7 @@ library(parallel)
 library(wesanderson)
 library(shinyBS)
 library(UpSetR)
+library(shinyBS)
 
 #loading files
 
