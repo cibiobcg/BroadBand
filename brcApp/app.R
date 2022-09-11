@@ -1,3 +1,5 @@
+library(plotly)
+library(shinyBS)
 library(shiny)
 library(shinythemes)
 library(tidyverse)
@@ -8,8 +10,6 @@ library(parallel)
 library(wesanderson)
 library(shinyBS)
 library(UpSetR)
-
-#loading files
 
 file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
 file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
@@ -36,31 +36,31 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                   multiple = TRUE,
                                   accept = '.tsv'),
                                 div(style = "margin-top:-550px;display:inline-block ",
-                                  actionButton("cancel1", "Cancel",icon("recycle"),#paper-plane
-                                             style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
-                                  actionButton('info1','',icon('question'))),
+                                    actionButton("cancel1", "Cancel",icon("recycle"),#paper-plane
+                                                 style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
+                                    actionButton('info1','',icon('question'))),
                                 div(style = 'margin-top: 20px',
-                                checkboxGroupInput(
-                                  inputId = 'Resources1',
-                                  label = 'Data resources',
-                                  choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
+                                    checkboxGroupInput(
+                                      inputId = 'Resources1',
+                                      label = 'Data resources',
+                                      choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
+                                      selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
                                 h6('Available somatic data'),
                                 div(style = "margin-top: -5px ",
-                                checkboxInput(
-                                  inputId = 'ALL',
-                                  label = 'all',
-                                  value = TRUE)),
+                                    checkboxInput(
+                                      inputId = 'ALL',
+                                      label = 'all',
+                                      value = TRUE)),
                                 div(style = "margin-top: -10px ",
-                                checkboxInput(
-                                  inputId = 'CNA',
-                                  label = 'Somatic copy number alterations',
-                                  value = FALSE)),
+                                    checkboxInput(
+                                      inputId = 'CNA',
+                                      label = 'Somatic copy number alterations',
+                                      value = FALSE)),
                                 div(style = "margin-top: -10px ",
-                                checkboxInput(
-                                  inputId = 'SNV',
-                                  label = 'Somatic single nucleotide variants',
-                                  value = FALSE)),
+                                    checkboxInput(
+                                      inputId = 'SNV',
+                                      label = 'Somatic single nucleotide variants',
+                                      value = FALSE)),
                                 checkboxGroupInput(
                                   inputId = 'Types1',
                                   label = 'Breast cancer subtypes',
@@ -74,8 +74,8 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 actionButton("updatebutton1", "Apply",icon("dna"),#paper-plane
                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                 div(style="display:inline-block;width:32%;text-align: center;",
-                                actionButton('Reset1',"Reset",icon("trash-alt"),
-                                             style = 'color: #fff; background-color: #BF0000; border-color:#BF0000'))),
+                                    actionButton('Reset1',"Reset",icon("trash-alt"),
+                                                 style = 'color: #fff; background-color: #BF0000; border-color:#BF0000'))),
                               conditionalPanel( # questo per creare un slider aggiuntivo quando si passa alla secondo pannello 
                                 condition = 'input.tabs== 2',
                                 fileInput(
@@ -86,13 +86,13 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                 div(style = "margin-top:-550px;display:inline-block ",
                                     actionButton("cancel2", "Cancel",icon("recycle"),#paper-plane
                                                  style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
-                                actionButton('info2','',icon('question'))),
+                                    actionButton('info2','',icon('question'))),
                                 div(style = 'margin-top: 20px',
-                                checkboxGroupInput(
-                                  inputId = 'Resources2',  
-                                  label = 'Data resources',
-                                  choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
+                                    checkboxGroupInput(
+                                      inputId = 'Resources2',  
+                                      label = 'Data resources',
+                                      choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'),
+                                      selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))),
                                 checkboxGroupInput(
                                   inputId = 'Types2',
                                   label = 'Breast cancer subtypes',
@@ -121,11 +121,11 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                                  style="color: #fff; background-color: #c64c04; padding: 14px; border-radius: 20%"),
                                     actionButton('info3','',icon('question'))),
                                 div(style = 'margin-top: 20px',
-                                checkboxGroupInput(
-                                  inputId = 'Resources3',
-                                  label = 'Data resources',
-                                  choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'),
-                                  selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))),
+                                    checkboxGroupInput(
+                                      inputId = 'Resources3',
+                                      label = 'Data resources',
+                                      choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'),
+                                      selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))),
                                 checkboxGroupInput(
                                   inputId = 'Types3',
                                   label = 'Breast cancer subtypes',
@@ -144,14 +144,6 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                              label = 'Choose',choices =c('deletion' = 'homodel','amplification' = 'ampl'),selected = 'ampl'),
                                 sliderInput(inputId = 'filter_median_freq',
                                             label= 'Filter Median frequencing', min = 0, max= 1, value=0.02,step = 0.01),
-                                selectInput(inputId ='Chromosomes',
-                                            label = 'Chromosomes',
-                                            choices = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X'),
-                                            selected = '1'),
-                                selectInput(inputId = 'Cytoband',
-                                            label = 'Cytoband',
-                                            choices = c(''),
-                                            multiple = FALSE),   
                                 actionButton("updatebutton3", "Apply",icon("dna"),#paper-plane
                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                 div(style="display:inline-block;width:32%;text-align: center;",
@@ -194,64 +186,53 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                         )),
                                tabPanel(id = 'thrd', value = 3,
                                         'Somatic Copy Number Aberrations (SCNAs)',
-                                        downloadButton(outputId = 'download_plot_All', label = 'download all chromosomes plot'),
-                                        downloadButton(outputId = 'download_plots', label = 'downlaod chromosome plot'),
-                                        downloadButton(outputId = 'download_cytoband',label = 'download cytoband plot'),
-                                        downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome'),
-                                        downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband'),
                                         tableOutput(outputId = 'out_data_3'),
                                         bsModal(id= 'information3', title = 'INFORMATION ABOUT FILES UPLOAD', trigger = 'info3', size = 'medium',textOutput('textinfo3')),
                                         fluidRow(style='height:80vh',
-                                                 column(12,plotOutput(outputId = 'All_plot',width = '125%', height = '820px'))
+                                                 column(12,plotlyOutput(outputId = 'All_plot',width = '125%', height = '820px')),
+                                                 column(12,downloadButton(outputId = 'download_plot_All_table',label = 'download all choromosomes table')),
+                                                 column(12,dataTableOutput(outputId = 'All_plot_tab'),style = 'width:125%')
                                         ),
                                         fluidRow(style='height:80vh',
-                                                 column(12,plotOutput(outputId = 'plot',width = '125%', height = '820px'))
+                                                 column(12,plotlyOutput(outputId = 'plot',width = '125%', height = '820px')),
+                                                 column(12,downloadButton(outputId = 'download_table_chromosome', label = 'Download table chromosome')),
+                                                 column(12,dataTableOutput(outputId = 'plot_tab'),style = 'width:125%')
                                         ),
                                         fluidRow(
-                                          column(12,plotOutput(outputId = 'cytoband', width = '125%', height = '820px'))
-                                        ),
-                                        fluidRow( 
-                                          column(12,
-                                                 tabsetPanel(
-                                                   tabPanel('Chromosome',
-                                                            fluidRow(
-                                                              column(12,dataTableOutput(outputId = 'table_chromosome'), style = "width:125%"))),
-                                                   tabPanel('Cytoband',
-                                                            fluidRow(
-                                                              column(12,dataTableOutput(outputId = 'table_cytoband'), style = "width:125%")))
-                                                 )
-                                          )
-                                        )
+                                          column(12,plotlyOutput(outputId = 'cytoband', width = '125%', height = '820px')),
+                                          column(12,downloadButton(outputId = 'download_table_cytoband', label = 'Download table cytoband')),
+                                          column(12,dataTableOutput(outputId = 'cytoband_tab'),style = 'width:125%'))
+                                      )
                                )
                    )
                  )
   )
 )
-)
+
 
 server <- function(input, output, session) {
   options(shiny.maxRequestSize=30*1024^2) 
   
   #############################################################################################################
   ##################################### Per primo pannello ###################################################
- observe({
-   inFile <- input$otherfile1
-   if(is.null(inFile)){
-     file <- file  
-     
-   } else{
-     numfiles = nrow(inFile)                
-     kata = list()
-     
-     for(i in 1:numfiles){
-       files = read.delim(input$otherfile1[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
-       kata[[i]] = files
-     }
-     finals <- do.call(rbind,kata)
-     file <- file %>% 
-       rbind(finals)
-     
-   }
+  observe({
+    inFile <- input$otherfile1
+    if(is.null(inFile)){
+      file <- file  
+      
+    } else{
+      numfiles = nrow(inFile)                
+      kata = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile1[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata[[i]] = files
+      }
+      finals <- do.call(rbind,kata)
+      file <- file %>% 
+        rbind(finals)
+      
+    }
     
     rawdata <- file %>%       
       group_by(data,class,type,cna.data,snv.data) %>%
@@ -266,7 +247,7 @@ server <- function(input, output, session) {
     shinyjs::reset("SNV")
     shinyjs::reset("Types1")
     shinyjs::reset("Class1")
-    })
+  })
   
   observeEvent(input$cancel1,{
     updateCheckboxGroupInput(session, 'Resources1', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
@@ -304,7 +285,7 @@ server <- function(input, output, session) {
       x1 <- x1 %>% 
         filter(cna.data == TRUE & snv.data ==TRUE)
     }
-   
+    
     x1 <- x1 %>%
       subset(data %in% input$Resources1) %>%
       subset(type %in% input$Types1) %>%
@@ -337,7 +318,7 @@ server <- function(input, output, session) {
         theme(text = element_text(size=18))+ 
         xlab('Type')+
         labs(fill = 'Classes')
-      }
+    }
   })
   
   newData2 <-eventReactive(input$updatebutton1,ignoreNULL = F,ignoreInit = F,{
@@ -361,9 +342,9 @@ server <- function(input, output, session) {
         scale_fill_manual(values=c('#999999','#E69F00')) +
         geom_text(aes(label=n.samples),size =5) + 
         facet_wrap(~factor(class,levels = c('Primary','Metastasis')))+
-      theme(text = element_text(size=18))+
-      xlab('Type')+
-      labs(fill = 'Classes')}
+        theme(text = element_text(size=18))+
+        xlab('Type')+
+        labs(fill = 'Classes')}
     
   })
   
@@ -385,7 +366,7 @@ server <- function(input, output, session) {
   })
   
   information_1 <- eventReactive(input$info1,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
+    print('It is possible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   ############### gestione combinazione tasti ALL - SNV - CNA #####################
   observeEvent(input$ALL,{
@@ -413,22 +394,22 @@ server <- function(input, output, session) {
   ##################################### Per secondo pannello ###################################################  
   
   observe({
-  inFile2 <- input$otherfile2
-  if(is.null(inFile2)){
-    x <- file2
-    
-  } else{
-    numfiles = nrow(inFile2)                
-    kata = list()
-    
-    for(i in 1:numfiles){
-      files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
-      kata[[i]] = files
+    inFile2 <- input$otherfile2
+    if(is.null(inFile2)){
+      x <- file2
+      
+    } else{
+      numfiles = nrow(inFile2)                
+      kata = list()
+      
+      for(i in 1:numfiles){
+        files = read.delim(input$otherfile2[[i,'datapath']],header = TRUE,stringsAsFactors = FALSE)
+        kata[[i]] = files
+      }
+      finals <- do.call(rbind,kata)
+      x <- file2 %>% 
+        rbind(finals)
     }
-    finals <- do.call(rbind,kata)
-    x <- file2 %>% 
-      rbind(finals)
-  }
     rawdatasecpan <- x %>%       
       group_by(data)
     risorse <- rawdatasecpan$data[!duplicated(rawdatasecpan$data)]
@@ -444,7 +425,7 @@ server <- function(input, output, session) {
   observeEvent(input$cancel2,{
     updateCheckboxGroupInput(session, 'Resources2', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','breast_msk_2018','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("otherfile2") 
-    })
+  })
   
   manipulation2 <- reactive({
     inFile2 <- input$otherfile2
@@ -467,14 +448,14 @@ server <- function(input, output, session) {
     
     x <- filter(x, data %in% input$Resources2)  #input$Resources2
     m <- x %>% 
-        group_by(Hugo_Symbol,class,type) %>% 
-        summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
-        ungroup() %>% 
-        group_by(class,type)
-
+      group_by(Hugo_Symbol,class,type) %>% 
+      summarise(max.freq=max(freq),w.mean=weighted.mean(x=freq, w = n.samples),median.freq = median(freq)) %>% 
+      ungroup() %>% 
+      group_by(class,type)
+    
     mw <- m %>%
-        arrange(desc(w.mean)) 
-  
+      arrange(desc(w.mean)) 
+    
     return(mw)
   })
   #data per barplot
@@ -573,7 +554,7 @@ server <- function(input, output, session) {
       mat <- filter(mat, type %in% input$Types2)
       mat <- filter(mat, class %in% input$Class2)
       mat <- mat %>% 
-            arrange(desc(Hugo_Symbol))
+        arrange(desc(Hugo_Symbol))
       
       ggplot(data=mat, aes(x=Hugo_Symbol, y=w.mean, fill= factor(class, levels = c('Primary','Metastasis')))) +
         geom_bar(stat="identity", position = 'dodge') + coord_flip() +
@@ -601,7 +582,7 @@ server <- function(input, output, session) {
   })
   
   information_2 <- eventReactive(input$info2,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
+    print('It is possible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   
   #############################################################################################################
@@ -639,7 +620,7 @@ server <- function(input, output, session) {
       }
       finals <- do.call(rbind,kata)
       scna_data <- scna_data %>% 
-                   rbind(finals)
+        rbind(finals)
     }
     
     rawdataterzpan <- scna_data %>%       
@@ -651,7 +632,7 @@ server <- function(input, output, session) {
   observeEvent(input$cancel3,{
     updateCheckboxGroupInput(session, 'Resources3', choices = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'), selected = c('brca_metabric','brca_igr_2015','brca_mbcproject_wagle_2017','brca_tcga_pan_can_atlas_2018'))
     shinyjs::reset("otherfile3") 
-    })
+  })
   
   manipulation3 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
     inFile3 <- input$otherfile3
@@ -733,6 +714,7 @@ server <- function(input, output, session) {
     }
     
     return(frq)
+    
   })
   
   manipulation4 <-reactive({#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
@@ -742,6 +724,7 @@ server <- function(input, output, session) {
       group_by(data,scna,chr,band) %>% 
       summarise(n=n(),
                 median.freq=median(freq,na.rm = TRUE),
+                deviation_std=sd(freq,na.rm = TRUE), 
                 max=max(freq,na.rm = TRUE), 
                 max.name=Hugo_Symbol[which.max(freq)]) %>% 
       mutate(is.goi = max.name %in% goi)
@@ -755,101 +738,167 @@ server <- function(input, output, session) {
     
     br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
     
+    br$chr_arm <- paste(br$chr,br$arm,sep = '') # per creare la nuova colonna chr_arm
+    
     return(br)
     
   })
   
-  plotting2 <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
-    
-    br<- manipulation4() 
-    if(nrow(br)==0){
-      df <- data.frame()
-      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
-        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
-        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
-        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
-        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
-        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-        annotate("text", x=5, y=3, size=10, col="red", label="No Data")
-    }else{
-      ggplot(br%>% filter(data == 'all_brca')
-             ,aes(x=band,y=median.freq,fill=arm)) +
-        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
-        geom_bar(stat = 'identity') +
-        facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
-        scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-        theme(axis.text.x = element_blank()) +
-        scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
-        ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
-        theme(text = element_text(size=25))
-    } 
-  })
-  
-  plotting <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
-    
-    br<- manipulation4() 
-  
-    br <- br %>%
-        filter(chr == input$Chromosomes)
+  chromosomes <- reactiveVal()              
+  bands <- reactiveVal()
+  genes<- reactiveVal()
 
-    if(nrow(br)==0){
+  observeEvent(event_data("plotly_click", source = "chromosomes"), {
+    chromosomes(event_data("plotly_click", source = "chromosomes")$x)
+    bands(NULL)
+    genes(NULL)
+  })
+  
+  observeEvent(event_data("plotly_click", source = "bands"), {
+    bands(event_data("plotly_click", source = "bands")$x)
+    genes(NULL)
+  })
+  observeEvent(event_data("plotly_click", source = "genes"), {
+    genes(event_data("plotly_click", source = "genes")$x)
+  })
+  
+  observeEvent(input$Reset3,{
+    shinyjs::reset("Resources3")
+    shinyjs::reset("filter_median_freq")
+    shinyjs::reset("Types3")
+    shinyjs::reset("Class3")
+    shinyjs::reset('copynumber_granularity')
+    shinyjs::reset('Groups3')
+    chromosomes(NULL)
+    bands(NULL)
+    genes(NULL)
+  })
+  
+  manipulation_chromosomes_plot <- reactive({
+    br<- manipulation4() 
+    
+    # save(br, file = 'primo.RData')
+
+    br <- br %>%
+    filter(data == 'all_brca') %>%
+    group_by(data,scna,chr_arm,arm) %>%
+     summarise(Mean = mean(median.freq),
+               Median = median(median.freq),
+               Deviation_standard = sd(median.freq))
+
+    return(br)
+  })
+  
+  plotting_first_plot <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{#eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+    
+    br_first_plot <- manipulation_chromosomes_plot()
+    
+    if(nrow(br_first_plot)==0){
       df <- data.frame()
-      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
+      plot1 <-ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
         annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
         annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
         annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
         annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
         geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
         annotate("text", x=5, y=3, size=10, col="red", label="No Data")
+      
+      plot1 <- ggplotly(plot1)
+      plot1
     }else{
-      ggplot(br%>% filter(data == 'all_brca'),aes(x=band,y=median.freq,fill=arm)) +
-        ylab(paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' '))) +   # come cambaire didascali con aggiornatmento
-        geom_bar(stat = 'identity') +
-        facet_wrap(~factor(chr,levels = c('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','X')),scales = 'free_x')+
-        scale_fill_manual('arm',values = wes_palette("Chevalier1",n = 2)) +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 16)) +
-        geom_point(data = br %>% filter(data != 'all_brca'),mapping = aes(x=band,y=median.freq,color=data),size=6) +  # fare controllo data con deleteion, che in quel caso al atogliere di daTA DA WIDJET NE SPUNTAVANO ALTRI 
-        scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4)) +
-        ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
-        geom_point(data =br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max),shape=4,size=6) +
-        geom_text(data = br %>% filter( data == 'all_brca'),mapping = aes(x=band,y=max,label=max.name.goi),size=10,angle=90,hjust=0,nudge_y=0.01)+
-        theme(text = element_text(size=25))
-    } 
+    br_first_plot <- br_first_plot %>% mutate(across(is.numeric, round, digits=3))
+    
+    # save(br_first_plot, file = 'file_grafico_cromosomi.RData')
+
+    plot_ly(data = br_first_plot[which(br_first_plot$arm == 'p'),], x= ~chr_arm, y= ~Mean, type = 'bar', name = 'p', source = 'chromosomes', color = I('#228B22'), 
+                      error_y = ~list(array= Deviation_standard, color = '#000000')) %>%
+        add_trace(data = br_first_plot[which(br_first_plot$arm == 'q'),], name = 'q', color =I('#FFD700')) %>% 
+        layout(title =paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ',')),
+               xaxis = list(title = 'Chromosomes',
+                            zeroline = FALSE,
+                            categoryorder = "array",
+                            categoryarray =  c('1p','1q','2p','2q','3p','3q','4p','4q','5p','5q','6p','6q','7p','7q','8p','8q','9p','9q','10p','10q','11p','11q','12p','12q','13p','13q','14p','14q','15p','15q','16p','16q','17p','17q','18p','18q','19p','19q','20p','20q','21p','21q','22p','22q','Xp','Xq')),
+              yaxis = list(title= paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' ')),
+                                         zeroline = FALSE)) 
+      } 
   })
   
-  manipulation_cytoband2 <- reactive({
+  overview_tab <- reactive({
+    manipulation_chromosomes_plot()
     
-    br <- manipulation4()
+  })  
+  manipulation_specific_chromosome <- reactive({
+    drilldown_1<- manipulation4()
+
+    drilldown_1<- drilldown_1 %>%
+         filter(chr_arm %in% chromosomes())
     
-    if(input$Chromosomes != 'All'){
-      br <- br %>%
-        filter(chr == input$Chromosomes)
+      
+    return(drilldown_1)
+  })
+  
+  plotting2 <- reactive({
+    if (is.null(chromosomes())) return(NULL)
+    
+    br2<-manipulation_specific_chromosome()
+
+    
+    br2_2 <-  br2%>%
+              filter(data == 'all_brca')%>% 
+              mutate(across(is.numeric, round, digits=3))
+    
+    br2_p <- br2_2%>%
+             filter(arm == 'p') 
+    
+    br2_p <- br2_p[order(br2_p$band, decreasing = TRUE, na.last = TRUE), ]
+             
+    br2_q <- br2_2%>%
+             filter(arm == 'q')
+    
+    br2_q <- br2_q[order(br2_q$band, decreasing = FALSE, na.last = TRUE),]
+    
+    br2_1 <- rbind(br2_p,br2_q)
+    
+    plot_ly(data =br2_1[which(br2_1$arm =='p'),], x= ~band, y= ~median.freq, source = 'bands', type = 'bar', name = 'p', color = I('#228B22'), error_y = ~list(array= deviation_std, color = '#000000'))  %>% 
+         add_trace(data =br2_1[which(br2_1$arm =='q'),], name = 'q', color = I('#FFD700')) %>% 
+         add_trace(data = br2 %>% filter(data != 'all_brca'),type='scatter', mode= 'marker+point', color = ~data ,marker = list(size = 10), name = ~data, error_y = ~list(array =c() , color = '#000000')) %>% 
+            layout(title= paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','), paste('Chromosome:',paste(chromosomes(),collapse = ''))),
+                    xaxis = list(title = 'bands',
+                            zeroline = FALSE,
+                            categoryorder = "array" ),
+                    yaxis = list(title= paste(input$Groups3 ,paste('median.freq by cytoband',collapse = ' ')),
+                                         zeroline = FALSE))
+  
+  })
+  
+  chromosome_tab <- reactive({
+    if(is.null(chromosomes())){
+      return(NULL)
     }else{
-      br <- br
-    }
-    
-    br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-    
-    bsel <- br %>%
-      pull(band) %>%
-      str_sort(numeric = TRUE) %>% 
-      unique() 
-    
-    return(bsel)
-  })
-  
-  
-  observe({
-    updateSelectInput(session, 'Cytoband', choices = manipulation_cytoband2())
-  })
-  
+      x_1 <-manipulation_specific_chromosome() %>% 
+          filter(data == 'all_brca')
+      
+      x_p <- x_1%>%
+        filter(arm == 'p') 
+      x_p <- x_p[order(x_p$band, decreasing = TRUE),]
+      
+      x_q <- x_1%>%
+        filter(arm == 'q')
+      
+      x_q <- x_q[order(x_q$band,decreasing = FALSE),]
+      
+      x <- rbind(x_p,x_q)
+           
+     return(x)
+      }
+    })
+
   manipulation_cytoband <- reactive({
     
     frq <- manipulation3()
     
     gfrq <- frq %>%
-      filter(band == input$Cytoband) %>%
-      filter(scna == input$Groups3) %>%
+      filter(band %in% bands()) %>%
       mutate(is.goi = Hugo_Symbol %in% goi) %>%
       arrange(chr,start,end)
     
@@ -857,70 +906,60 @@ server <- function(input, output, session) {
     
   })
   
-  plotting3 <-eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{ #eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,
-    
-    gfrq <- manipulation_cytoband() 
-    if(nrow(gfrq)==0){
-      df <- data.frame()
-      ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 10) +
-        annotate("text", x=3.9, y=5.0, size=40, col="red", label="(" ) +
-        annotate("text", x=5, y=5.6, size=12, col="red", label="o  o" ) +
-        annotate("text", x=6.1, y=5.0, size=40, col="red", label=")" ) +
-        annotate("text", x=5, y=5.1, size=12, col="red", label="|" ) +
-        geom_segment(aes(x = 4.7, xend = 5.3, y = 4.4, yend = 4.4), size=2, color="red") +
-        annotate("text", x=5, y=3, size=10, col="red", label="No Data")
-    }else{
-    ggplot(gfrq %>%
-               filter(data == 'all_brca') %>%
-               arrange(start,end) %>% 
-               distinct(Hugo_Symbol, .keep_all = TRUE) %>%
-               mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)),
-             aes(x=Hugo_Symbol,y=freq,fill=is.goi)) +
-        ylab(paste(input$Groups3 ,paste('freq', collapse=' '))) + 
-        geom_bar(stat = 'identity') +
-        facet_wrap(~band,scales = 'free_x') +
-        scale_x_discrete(guide = guide_axis(n.dodge=2)) +
-        scale_fill_manual('genes of interest',values = wes_palette("Royal1",n = 2)) +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,size = 18)) +
-        ggtitle(paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','))) +
-        geom_point(data = gfrq %>% filter(data != 'all_brca'),mapping = aes(x=Hugo_Symbol,y=freq,color=data),size=6) +
-        scale_color_manual('data',values = wes_palette("GrandBudapest1",n = 4))+
-        theme(text = element_text(size=25))
-    }
-  })
-  
-  
-  chromosome_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
-    br <- manipulation4()
-    
-    if(input$Chromosomes != 'All'){
-      br <- br %>%
-        filter(chr == input$Chromosomes)
-    }else{
-      br <- br
-    }
-    
-    br$max.name.goi[which(br$is.goi)] <- br$max.name[which(br$is.goi)]
-    
-    br <- br %>%
-      filter(data == 'all_brca')
-    
-  })
-  
-  cytoband_table <- eventReactive(input$updatebutton3,ignoreNULL = F,ignoreInit = F,{
+  plotting3 <-reactive({
+    if (is.null(bands())) return(NULL)
     
     gfrq <- manipulation_cytoband()
     
-    gfrq <-gfrq %>% 
-      filter(data == 'all_brca') %>%
+    gfrq2 <- gfrq %>%
+              filter(data != 'all_brca') %>%
+              distinct(Hugo_Symbol, .keep_all = TRUE) %>%
+              mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
+
+    gfrq2[order(gfrq2$start, decreasing = FALSE),]
+    
+    gfrq1 <- gfrq%>% 
+      filter(data == 'all_brca') %>% 
       arrange(start,end) %>%
       distinct(Hugo_Symbol, .keep_all = TRUE) %>%
-      mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
+      mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol)) %>% 
+      mutate(across(is.numeric, round, digits=3))
     
+    gfrq1[order(gfrq1$start, decreasing = FALSE),]
+    
+    plot_ly(data = gfrq1, x =~Hugo_Symbol) %>% 
+      add_bars(y =~freq, color = ~is.goi, colors = c('TRUE' = "#B22222", 'FALSE' = '#808080')) %>% 
+      add_markers(data = gfrq2, y =~freq, split = ~data, marker = list(size = 10)) %>% 
+      layout(title = paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','),paste('Cytoband:',paste(bands(),collapse =''))),
+                                  xaxis = list(title = 'Hugo_Symbol',
+                                             zeroline = FALSE,
+                                             type = 'category',
+                                             categoryorder = "array"),
+                            yaxis = list(title= paste(input$Groups3 ,paste('freq',collapse = ' ')),
+                                                          zeroline = FALSE))
+  })
+  
+   cytoband_tab <- reactive({
+     if(is.null(chromosomes())){
+       return(NULL)
+     }else if(is.null(bands())){
+       return(NULL)
+     }else{
+      gfrq<- manipulation_cytoband()
+      gfrq_2 <- gfrq%>% 
+         filter(data == 'all_brca') %>% 
+         arrange(start,end) %>%
+         distinct(Hugo_Symbol, .keep_all = TRUE) %>%
+         mutate(Hugo_Symbol=factor(Hugo_Symbol, levels = Hugo_Symbol))
+      
+      gfrq_2<- gfrq_2[order(gfrq_2$start,decreasing = FALSE),]
+      return(gfrq_2)
+      
+     }
   })
   
   information_3 <- eventReactive(input$info3,{
-    print('It is posssible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
+    print('It is possible to upload more files up to a maximum of 30MB, for uploading more files at the same time they need to be selected together')
   })
   
   ############################################################################################################
@@ -932,13 +971,14 @@ server <- function(input, output, session) {
   #plotting
   output$myplot <- renderPlot({
     newData()
-      })
+  })
   
   output$classplot <- renderPlot({
     newData2()
   })
   
   #DataTable
+  
   output$classtable <- renderDataTable({newData_table()})
   
   #PER DOWNLOAD
@@ -985,7 +1025,7 @@ server <- function(input, output, session) {
     data_barplot_heat()
   }, height = 1000)
   
-  output$table2 <- renderDataTable({data_second_pannel_table()})
+  output$table2 <- renderDataTable({data_second_pannel_table()})  
   
   output$download_barplot<-  downloadHandler(
     filename = function(){
@@ -1020,52 +1060,41 @@ server <- function(input, output, session) {
     information_3()
   })
   
-  output$All_plot <- renderPlot({
-    plotting2()},
-    height = 800)
+  output$All_plot <- renderPlotly({
+    plotting_first_plot()},
+    # height = 800
+    )
   
-  output$plot <-renderPlot({
-    plotting()
-  },height = 800
+  output$plot <-renderPlotly({
+    plotting2()
+  }
+  #,height = 800
   )
-  output$cytoband <- renderPlot({
-    plotting3()
-  }, height = 800)
-  
-  output$table_chromosome <- renderDataTable({chromosome_table()})
-  
-  output$table_cytoband <- renderDataTable({cytoband_table()})
-  
-  output$download_plot_All <- downloadHandler(
-    filename = function(){
-      paste('All_chromosomes_plot','.pdf',sep='')
-    },
-    content = function(file){
-      ggsave(file,plotting2(), width = 30, height = 30)
-    }
+  output$cytoband <- renderPlotly({
+    plotting3()}
+  # , height = 800
   )
   
-  output$download_plots<-  downloadHandler(
-    filename = function(){
-      paste('Chromosome_plot','.pdf',sep = '')
-    },
-    content = function(file){
-      ggsave(file,plotting(), width = 30, height = 30)
-    }
-  )
+  output$All_plot_tab <- renderDataTable({overview_tab()}, options = list(pageLength = 10))
   
-  output$download_cytoband<-  downloadHandler(
+  output$plot_tab <- renderDataTable({chromosome_tab()}, options = list(pageLength = 10))
+  
+  output$cytoband_tab <- renderDataTable({cytoband_tab()}, options = list(pageLength = 10))
+  
+
+  output$download_plot_All_table <-  downloadHandler(
     filename = function(){
-      paste('Cytoband_plot','.pdf',sep = '')
+      paste('All_chromosome_tab','.csv',sep = '')
     },
     content = function(file){
-      ggsave(file,plotting3(),width = 30,height = 30)
+      write.csv(overview_tab(),file, row.names = FALSE, col.names = T, sep = ',')
     }
+
   )
   
   output$download_table_chromosome <-  downloadHandler(
     filename = function(){
-      paste('CNA_table_chromosome','.csv',sep = '')
+      paste(paste(chromosomes(),collapse = ''), paste('table_chromosome','.csv',sep = ''))
     },
     content = function(file){
       write.csv(chromosome_table(),file, row.names = FALSE, col.names = T, sep = ',')
@@ -1074,10 +1103,10 @@ server <- function(input, output, session) {
   
   output$download_table_cytoband <-  downloadHandler(
     filename = function(){
-      paste('CNA_table_cytoband','.csv',sep = '')
+      paste(paste(bands(),collapse =''),paste('table_cytoband','.csv',sep = ''))
     },
     content = function(file){
-      write.csv(cytoband_table(),file, row.names = FALSE, col.names = T, sep = ',')
+      write.csv(cytoband_tab(),file, row.names = FALSE, col.names = T, sep = ',')
     }
   )
   
