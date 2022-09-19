@@ -12,4 +12,4 @@ Every pannel have the possibility to upload a single file that will bind diretcl
 
 For a comeplete use of this app there is the need to download the file 'app.R' and folders inside 'brcApp', which contain the files, the application code and the temporary logo for this app. The user need to set the working directory to source file location.  
  
-More information on the Wiki 
+More information on the [Wiki](https://github.com/cibiobcg/BroadBand/blob/main/README.md) 
