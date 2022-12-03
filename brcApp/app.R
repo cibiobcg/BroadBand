@@ -11,11 +11,17 @@ library(wesanderson)
 library(shinyBS)
 library(UpSetR)
 
-file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
-file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
-ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
-goi <- readLines('./Files_app/genes_of_interest.txt')
-load('./Files_app/scna_data.RData')
+# file <- read.delim('./Files_app/sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+# file2 <- read.delim('./Files_app/snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+# ensembl <- read.delim('./Files_app/mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+# goi <- readLines('./Files_app/genes_of_interest.txt')
+# load('./Files_app/scna_data.RData')
+
+file <- read.delim('sif_cbioportal_brca.tsv', header = TRUE,stringsAsFactors = FALSE)
+file2 <- read.delim('snvs_raw_data.tsv', header = TRUE, stringsAsFactors = FALSE)
+ensembl <- read.delim('mart_export_GRCh38p13.tsv',check.names = F,stringsAsFactors = F)
+goi <- readLines('genes_of_interest.txt')
+load('scna_data.RData')
 
 
 ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
@@ -172,6 +178,7 @@ ui <- shinyUI(fluidPage(#shinythemes::themeSelector(),
                                         'Somatic Single Nucleotide Variants (SNVs)',
                                         downloadButton(outputId = 'download_barplot',label = 'Download barplot'),
                                         downloadButton(outputId = 'download_heatmap',label = 'Download heatmap'),
+                                        downloadButton(outputId = 'download_barplot_heat',label = 'Download barplot heatmap'),
                                         downloadButton(outputId = 'download_table2',label = 'Download table'),
                                         tableOutput(outputId = 'out_data_2'),
                                         bsModal(id= 'information2', title = 'INFORMATION ABOUT FILES UPLOAD', trigger = 'info2', size = 'medium',textOutput('textinfo2')),
@@ -806,7 +813,7 @@ server <- function(input, output, session) {
       plot1 <- ggplotly(plot1)
       plot1
     }else{
-    br_first_plot <- br_first_plot %>% mutate(across(is.numeric, round, digits=3))
+    br_first_plot <- br_first_plot %>% mutate(across(where(is.numeric), round, digits=3))
     
     # save(br_first_plot, file = 'file_grafico_cromosomi.RData')
 
@@ -1046,6 +1053,15 @@ server <- function(input, output, session) {
     }
   )
   
+  output$download_barplot_heat <- downloadHandler(
+    filename = function(){
+      paste('SNV_barplot_heatmap','.pdf',sep = '')
+    },
+    content = function(file){
+      ggsave(file,data_barplot_heat(), width = 30, height = 30)
+    }
+  )
+  
   output$download_table2 <-  downloadHandler(
     filename = function(){
       paste('SNV_table','.csv',sep = '')
@@ -1115,6 +1131,3 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
-
-
