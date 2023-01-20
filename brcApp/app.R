@@ -815,11 +815,10 @@ server <- function(input, output, session) {
     }else{
     br_first_plot <- br_first_plot %>% mutate(across(where(is.numeric), round, digits=3))
     
-    # save(br_first_plot, file = 'file_grafico_cromosomi.RData')
-
     plot_ly(data = br_first_plot[which(br_first_plot$arm == 'p'),], x= ~chr_arm, y= ~Mean, type = 'bar', name = 'p', source = 'chromosomes', color = I('#228B22'), 
                       error_y = ~list(array= Deviation_standard, color = '#000000')) %>%
         add_trace(data = br_first_plot[which(br_first_plot$arm == 'q'),], name = 'q', color =I('#FFD700')) %>% 
+        layout(xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE))%>%
         layout(title =paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ',')),
                xaxis = list(title = 'Chromosomes',
                             zeroline = FALSE,
@@ -869,7 +868,8 @@ server <- function(input, output, session) {
     plot_ly(data =br2_1[which(br2_1$arm =='p'),], x= ~band, y= ~median.freq, source = 'bands', type = 'bar', name = 'p', color = I('#228B22'), error_y = ~list(array= deviation_std, color = '#000000'))  %>% 
          add_trace(data =br2_1[which(br2_1$arm =='q'),], name = 'q', color = I('#FFD700')) %>% 
          add_trace(data = br2 %>% filter(data != 'all_brca'),type='scatter', mode= 'marker+point', color = ~data ,marker = list(size = 10), name = ~data, error_y = ~list(array =c() , color = '#000000')) %>% 
-            layout(title= paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','), paste('Chromosome:',paste(chromosomes(),collapse = ''))),
+         layout(xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE))%>%
+         layout(title= paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','), paste('Chromosome:',paste(chromosomes(),collapse = ''))),
                     xaxis = list(title = 'bands',
                             zeroline = FALSE,
                             categoryorder = "array" ),
@@ -937,6 +937,7 @@ server <- function(input, output, session) {
     plot_ly(data = gfrq1, x =~Hugo_Symbol) %>% 
       add_bars(y =~freq, color = ~is.goi, colors = c('TRUE' = "#B22222", 'FALSE' = '#808080')) %>% 
       add_markers(data = gfrq2, y =~freq, split = ~data, marker = list(size = 10)) %>% 
+      layout(xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE))%>%
       layout(title = paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ','),paste('Cytoband:',paste(bands(),collapse =''))),
                                   xaxis = list(title = 'Hugo_Symbol',
                                              zeroline = FALSE,
@@ -1131,3 +1132,4 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
