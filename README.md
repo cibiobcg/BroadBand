@@ -20,8 +20,8 @@ to show the genes most frequently altered and if there are specific genes for cl
 All panels contain widgets about the resources of the data, the tumor classification, and the tumor subtypes but some panels can be present with other widgets but really intuitive.
 In the panels by pressing the button 'Apply' the user is able to filter the data and see the results of the selected filters on plots and tables.
 
-Every panel has the possibility to upload a single file that will bind directly to the file already present in the application. This widget shows the resources will be automatically updated with all the new resources of the new file generated, for seeing the updated plots and tables with the new file the user need to press even in this case the button 'Apply' and then the new file can undergo under the same analysis procedures. Any plots and tables in the application can be downloaded thanks to the buttons in the application.
+Every panel has the possibility to upload a single file that will bind directly to the file already present in the application. This widget shows the resources will be automatically updated with all the new resources of the new file generated, for seeing the updated plots and tables with the new file the user needs to press even in this case the button 'Apply' and then the new file can undergo under the same analysis procedures. Any plots and tables in the application can be downloaded thanks to the buttons in the application.
 
 For complete use of this app, there is the need to download the file 'app.R' and folders inside 'brcApp', which contain the files, the application code, and the temporary logo for this app. The user needs to set the working directory to the source file location.  
  
-More information on the [GitHub] (https://cibiobcg.github.io/BroadBand/) 
+More information on the [GitHub page](https://cibiobcg.github.io/BroadBand/) 
