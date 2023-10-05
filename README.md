@@ -24,4 +24,4 @@ Every panel has the possibility to upload a single file that will bind directly 
 
 For complete use of this app, there is the need to download the file 'app.R' and folders inside 'brcApp', which contain the files, the application code, and the temporary logo for this app. The user needs to set the working directory to the source file location.  
  
-More information on the [GitHub page] (https://cibiobcg.github.io/BroadBand/) 
+More information on the [GitHub] (https://cibiobcg.github.io/BroadBand/) 
