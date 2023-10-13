@@ -7,5 +7,31 @@
         <h1> BroadBand</h1>
         <p>  BroadBand is a web-based resource developed with the Shiny R framework, designed for the exploration of genomic data selected among a comprehensive selection of breast cancer (BRCA) studies with available information on somatic single nucleotide variants (SNVs) and somatic copy number alterations (SCNAs). BroadBand allows an intuitive and custom navigation of SNVs and SCNAs data which can be filtered and summarized at different resolution levels, from gene to chromosome, and stratified across the different breast cancer histotypes and tumor classifications.</p>
         <!-- <div align="center">Hello World!</div> -->
+
+        <h2>Cohort overview and samples stratification</h2>
+        <p>The “Overview” panel, the home page of the BroadBand resource, provides a detailed report (as bar
+            chart and table) about the number of samples, carefully stratified by molecular features and data type
+            availability, included in the selected cohort(s).</p>
+        <p>The widget panel (Figure 1A) is populated with multiple selection options which will update the
+            BRCA data displayed by default. Specifically, the widget panel allows the user to:
+            1. Upload a new BRCA dataset to be inspected in addition to those ones available by default.
+            The cancel button will reverse the operation by removing the uploaded dataset among
+            available data.
+            2. Select samples based on somatic aberrations data of interest. For example, the user can select
+            only those samples with SCNAs and/or somatic (non-synonymous) SNVs data available.
+            153. Select BRCA cohorts of interest. If the user uploaded a custom dataset, it will be listed here.
+            4. Select data based on BRCA subtypes.
+            5. Select data based on tumor classification.
+            6. Reset all settings to default.
+            7. Apply selected options to data and update plots and the table accordingly.
+            In addition to the widgets bar, the page layout also includes two plots, a table and three downloads
+            buttons which allow the user to save all outputs displayed. The plots and the table are the results of
+            options selected by the user. Specifically, the first bar chart reports the number of samples stratified
+            by cancer subtypes and tumor classification, the second plot is composed by two bar charts, one for
+            each tumor class (primary and metastatic), and reports sample counts by cancer subtypes. The table
+            (Figure 1C) reports data represented in all plots</p>
+        <h2>Genes aberrations frequencies based on somatic SNVs data</h2>
+        <p> </p>
+        <h2>Chromosomal aberrations frequencies based on SCNAs data</h2>
     </body>
 </html>
