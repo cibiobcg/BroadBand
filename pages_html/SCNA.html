@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="eng">
+    <head>
+        <!-- Is the title of the page, over the web page-->
+        <meta charset = 'UTF-8'>
+        <meta name='viewport' content="width=device-width, inital-scake = 1.0">
+        <title>BradBand</title> 
+        <!--to link to css, stylesheet = means that this is the stylesheet we are linking to -->
+        <!-- href is the path for the styleshhet we want to use-->
+        <link rel="stylesheet" href="../css/main.css">
+    </head>
+    <body class="body_style">
+        <h1 align="center" class="header">Chromosomal aberrations <div></div> based on SCNAs data
+        <section align = 'right'>
+            <a href="../index.html" class="indexes">BroadBand</a>
+            <a href="overview.html" class="indexes">Overview</a>
+            <a href="SNV.html" class="indexes">SNVs</a>
+        </section></h1>
+        <p>The third panel is focused on somatic copy number aberrations data, this panel provides a full report
+            about the frequencies of somatic copy number aberrations occurring in genomic regions of different
+            ranges. Specifically, aberrations occurring in gene, chromosomal cytobands and chromosomal arms,
+            are computed based on molecular features, tumor classification of available data included in the
+            selected cohorts. </p>
+        <p>The widget panel (Figure 3A) is populated with multiple selection options which will update the BRCA data displayed by default. Specifically, the widget panel allows the user to:
+            1. Upload a new BRCA dataset to be inspected in addition to those ones available by default.
+            The cancel button will reverse the operation by removing the uploaded dataset among
+            available data.
+            2. Select BRCA cohorts of interest. If the user uploaded a custom dataset, it will be listed here.
+            3. Select data based on BRCA subtypes.
+            4. Select data based on tumor classification.
+            5. Set granularity of SCNAs event. The user can select to compute and report the frequencies of
+            aberrations based on 2 classes of aberrations: amplifications and deletion events or,
+            alternatively, on 4 classes:
+            homozygous deletion, hemizygous deletion, gain, and
+            amplification events.
+            6. Select the SCNAs event of interest to be displayed.
+            7. Apply a threshold on aberration frequencies by using the provided slider.
+            8. Select the chromosome of interest to be displayed.
+            9. Select the cytoband of interest to be displayed.
+            10. Reset all settings to default.
+            11. Apply selected options to data and update plots and tables accordingly.
+            In addition to the widgets bar, the page layout also includes two plots, a table and five downloads
+            buttons which allow the user to save all outputs displayed. The plots and the tables are the results of
+            all options selected by the user. The first plot is a set of bar charts, one for each chromosome, to
+            provide a landscape of SCNAs frequencies of aberrations. In the second plot the user can select a
+            chromosome of interest to get a closer look at the frequencies of aberration across the chromosome
+            cytobands. The third plot reports, within a selected cytoband of interest, the frequency of aberrations
+            at the gene level. A gene is highlighted (Figure 3D) if it is a known cancer driver gene. Genomic
+            location information (Figure 3B, 3C) and BRCA dataset used to compute frequencies of aberrations
+            displayed (Figure 3C, 3D) are reported in the plot legend. </p>
+    </body>
+</html>

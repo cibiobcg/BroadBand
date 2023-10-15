@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="eng">
+    <head>
+        <!-- Is the title of the page, over the web page-->
+        <meta charset = 'UTF-8'>
+        <meta name='viewport' content="width=device-width, inital-scake = 1.0">
+        <title>BradBand</title> 
+        <!--to link to css, stylesheet = means that this is the stylesheet we are linking to -->
+        <!-- href is the path for the styleshhet we want to use-->
+        <link rel="stylesheet" href="../css/main.css">
+    </head>
+    <body class="body_style">
+        <h1 align="center" class="header">Genes aberrations frequencies <div></div> based on somatic SNVs data
+        <section align = 'right'>
+            <a href="../index.html" class="indexes">BroadBand</a>
+            <a href="overview.html" class="indexes">Overview</a>
+            <a href="SCNA.html" class="indexes">SCNAs</a>
+        </section></h1>
+        <p>The second panel is focused on somatic single nucleotide variants data and provides a comprehensive
+            report about the frequencies of aberration of genes </p>
+        <p>The widget panel (Figure 2A) is populated with multiple selection options which will update the
+            BRCA data displayed by default. Specifically, the widget panel allows the user to:
+            1. Upload a new BRCA dataset to be inspected in addition to those ones available by default.
+            The cancel button will reverse the operation by removing the uploaded dataset among
+            available data.
+            2. Select BRCA cohorts of interest. If the user uploaded a custom dataset, it will be listed here.
+            3. Select data based on BRCA subtypes.
+            4. Select data based on tumor classification.
+            5. Select the N most frequently aberrant genes by using the provided slider.
+            6. Reset all settings to default.
+            7. Apply selected options to data and update plots and the table accordingly.
+            In addition to the widgets bar, the page layout also includes two plots, a table and three downloads
+            buttons which allow the user to save all outputs displayed. The plots and the table are the results of
+            options selected by the user. Specifically, the first plot (Figure 2B, left plot) comprises multiple bar
+            charts, data represented are stratified by tumor classification (one for each row) and for breast cancer
+            subtypes (one for each column; the first column “all” comprises tumor subtypes data altogether) as
+            reported on top of each inset panel. Within each bar chart, genes (listed on the y-axis) are ranked
+            based on their aberration frequency.
+            Alongside (Figure 2B, right plot), the heatmap compares aberration frequencies of genes between
+            primary and metastatic and by cancer subtypes. Data represented in this way could be helpful to spot
+            by visual inspection which genes are mutually exclusive within a single tumor class. The table
+            (Figure 2C) reports data represented in both plot</p>
+            
+    </body>
+</html>
