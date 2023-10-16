@@ -10,17 +10,97 @@
         <link rel="stylesheet" href="css/main.css">
     </head>
     <body class="body_style">
-        <h1 align="center" class="header"> BroadBand <section align = 'right'>
-            <a href="pages_html/overview.html" class="indexes">Overview</a>
-            <a href="pages_html/SNV.html" class="indexes">SNVs</a>
-            <a href="pages_html/SCNA.html" class="indexes">SCNAs</a>
-        </section> </h1> 
+        <section align="left" style="padding: 0%;">
+            <a href="./index.html"><img src="./brcApp/www/logo_app.jpg" alt="BroadBand logo" class="logo"></a> 
+        </section>
+        <h1 align="center" class="header" style="padding-top:0;"> BroadBand 
+            <section align = 'center'>
+                <a href="pages_html/overview.html" class="indexes">Overview</a>
+                <a href="pages_html/SNV.html" class="indexes">SNVs</a>
+                <a href="pages_html/SCNA.html" class="indexes">SCNAs</a>
+            </section> </h1> 
         <p style="font-size:medium; padding-left:50px; padding-right:50px ; padding-top:auto; padding-bottom: auto;" >  BroadBand is a web-based resource developed with the Shiny R framework, 
             designed for the exploration of genomic data selected among a comprehensive selection of 
             breast cancer (BRCA) studies with available information on somatic single nucleotide variants (SNVs) and somatic 
             copy number alterations (SCNAs). BroadBand allows an intuitive and custom navigation of SNVs and SCNAs data which can 
             be filtered and summarized at different resolution levels, from gene to chromosome, and stratified across the different breast 
             cancer histotypes and tumor classifications.</p>
+        <p style="font-size:medium; padding-left:50px; padding-right:50px ; padding-top:auto; padding-bottom: auto;"> The developed resource takes as input selected pre-processed somatic
+            single nucleotides alterations and copy number aberrations data from publicly available datasets
+            (Table 1) to assess the most frequently aberrant genomic regions, from gene- to chromosome-level,
+            across BRCA tumor subtypes.
+            The web-resource, organized in 3 different sections, allows the user to explore, visualize and
+            download information of interest. Each section reports results of a specific analysis that can be
+            customized by tuning multiple settings.
+            The first section provides a data overview of considered datasets, reporting a) annotations about
+            genomic data availability and tumor classification, b) overall summary statistics such as the number
+            of samples stratified by tumor molecular subtypes. The second section focuses on gene aberration
+            frequencies based on somatic single nucleotide variants while the third section analyses somatic copy
+            number alterations and compute aberration frequencies at different resolutions: from gene to
+            chromosome level.</p>
+        <p style="font-size:medium; padding-left:50px; padding-right:50px ; padding-top:auto; padding-bottom: auto;"> Breast cancers (BRCA) datasets of interest have been selected and inspected through the 
+            <a href="https://www.cbioportal.org" class="indexes2" target="_blank">cBioPortal</a> for Cancer Genomics resource. The selected studies consist of cohorts
+            where tumor samples from BRCA oncological patients have been molecularly profiled via Whole
+            Exome Sequencing (WES) approach.</p>
+            <table border="1px solid white" style="width:90%;" align="center">
+                <tr>
+                  <th>Names</th>
+                  <th>Number of patients</th>
+                  <th>Paper references</th>
+                  <th>PMID</th>
+                </tr>
+                <tr>
+                  <td>brca_metabric</td>
+                  <td>1980</td>
+                  <td>Breast Cancer (METABRIC,
+                    Nature 2012 & Nat Commun
+                    2016)</td>
+                  <td>27161491,
+                    30867590,
+                    22522925</td>
+                </tr>
+                <tr>
+                  <td>brca_igr_2015</td>
+                  <td>208</td>
+                  <td>Metastatic breast cancer
+                    (INSERM-PLoS Med 2016)</td>
+                  <td>28027327</td>
+                </tr>
+                <tr>
+                    <td>brca_mbcproject_wagle_2
+                        017</td>
+                    <td>106</td>
+                    <td>The Metastatic Breast Cancer
+                        Project (Provisional -
+                        February 2020)</td>
+                    <td><a href="https://mbcproject.org/data-release" class="indexes2" target="_blank">link</a></td>
+                  </tr>
+                  <tr>
+                    <td>breast_msk_2018</td>
+                    <td>1739</td>
+                    <td>MSK-IMPACT Clinical
+                        sequencing Cohort (MSKK,
+                        Nat Med 2017)</td>
+                    <td>28481359</td>
+                  </tr>
+                  <tr>
+                    <td>brca-tcga_pan_can_atlas_2018</td>
+                    <td>945</td>
+                    <td>Breast Invasive Carcinoma
+                        (TCGA, PanCancer Atlas)</td>
+                    <td>29625048,
+                        29596782,
+                        29622463,
+                        29617662,
+                        29625055,
+                        29625050,
+                        29617662,
+                        30643250,
+                        32214244,
+                        29625049,
+                        29850653</td>
+                  </tr>
+              </table> 
         <!-- <div align="center">Hello World!</div> -->                
     </body>
 </html>
