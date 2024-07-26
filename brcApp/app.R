@@ -791,7 +791,11 @@ server <- function(input, output, session) {
     group_by(data,scna,chr_arm,arm) %>%
      summarise(Mean = mean(median.freq),
                Median = median(median.freq),
-               Deviation_standard = sd(median.freq))
+               first_q = quantile(median.freq,0.05),
+               third_q = quantile(median.freq,0.95))
+
+    br$third_q <- (br$third_q - br$Mean)
+    br$first_q <- (br$Mean - br$first_q)
 
     return(br)
   })
@@ -816,7 +820,7 @@ server <- function(input, output, session) {
     br_first_plot <- br_first_plot %>% mutate(across(where(is.numeric), round, digits=3))
     
     plot_ly(data = br_first_plot[which(br_first_plot$arm == 'p'),], x= ~chr_arm, y= ~Mean, type = 'bar', name = 'p', source = 'chromosomes', color = I('#228B22'), 
-                      error_y = ~list(array= Deviation_standard, color = '#000000')) %>%
+                      error_y = ~list(array= third_q, arrayminus = first_q, color = '#000000', symmetric = FALSE)) %>%
         add_trace(data = br_first_plot[which(br_first_plot$arm == 'q'),], name = 'q', color =I('#FFD700')) %>% 
         layout(xaxis = list(fixedrange = TRUE), yaxis = list(fixedrange = TRUE))%>%
         layout(title =paste('class:',paste(input$Class3,collapse = ','),'\ntype: ',paste(input$Types3,collapse = ',')),
